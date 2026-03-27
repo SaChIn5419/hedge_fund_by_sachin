@@ -129,7 +129,8 @@ class ChimeraEngineNormal:
         down_vol = max(down_vol, 0.001)
         fip = fip / down_vol * 100
 
-        fip = max(-100, min(100, fip))
+        # Only cap extreme negative values, keep positive unbounded
+        fip = max(-100, fip)
         return fip
 
     def check_structure(self, df):
@@ -261,8 +262,14 @@ class ChimeraEngineNormal:
                 candidates.append((ticker, fip, stock_slice))
 
             candidates.sort(key=lambda x: x[1], reverse=True)
-            top_picks = [c for c in candidates[:8] if c[1] > 0]
-            bottom_picks = [c for c in candidates[-5:] if c[1] < 0]
+
+            # Regime-based: more shorts in bear
+            if regime == "BEAR":
+                top_picks = [c for c in candidates[:10] if c[1] > 0]
+                bottom_picks = [c for c in candidates[-10:] if c[1] < 0]
+            else:
+                top_picks = [c for c in candidates[:10] if c[1] > 0]
+                bottom_picks = [c for c in candidates[-5:] if c[1] < 0]
 
             if not top_picks and not bottom_picks:
                 self.trade_log.append(
