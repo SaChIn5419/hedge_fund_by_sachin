@@ -1,0 +1,27 @@
+# =============================================
+# Hedgefund Chimera - Dependencies
+# =============================================
+
+# Core Data
+pandas>=2.0.0
+numpy>=1.24.0
+polars>=0.20.0
+
+# Financial Data
+yfinance>=0.2.30
+
+# Scientific Computing
+scipy>=1.10.0
+
+# Visualization
+plotly>=5.15.0
+matplotlib>=3.7.0
+
+# JIT Compilation (for HFD physics kernels)
+numba>=0.58.0
+
+# Parquet file support (already included with pandas/polars, but explicit)
+pyarrow>=14.0.0
+
+# Optional: VectorBT (for legacy regime swing strategies)
+# vectorbt>=0.26.0
