@@ -154,9 +154,9 @@ def run_chimera_fip():
     print("  CHIMERA FROG-IN-THE-PAN (MAIN)")
     print("=" * 60)
 
-    import chimera_engine_local
+    import chimera_engine
 
-    engine = chimera_engine_local.ChimeraEngineFinal()
+    engine = chimera_engine.ChimeraEngineNormal()
     engine.run_simulation()
 
     csv_path = os.path.join(
