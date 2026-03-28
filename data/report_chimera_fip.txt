@@ -1,0 +1,85 @@
+CHIMERA STATIC BACKTEST REPORT
+========================================================
+Date range         : 2019-12-06 -> 2026-03-20
+Benchmark          : ^NSEI
+
+PERFORMANCE
+  Initial capital  : ₹1,000,000.00
+  Final equity     : ₹4,600,165.08
+  Total return     : 360.02%
+  CAGR             : 27.48%
+
+RISK
+  Volatility (ann.): 22.94%
+  Sharpe ratio     : 1.24
+  Sortino ratio    : 1.98
+  Max drawdown     : -32.35%
+  Calmar ratio     : 0.85
+  Ulcer index      : 0.1273
+  VaR 95%          : -4.86%
+  CVaR 95%         : -6.38%
+  Skew / Kurtosis  : 0.12 / 0.57
+
+ACTIVITY
+  Trade rows       : 6776
+  Active rows      : 6776
+  Active dates     : 308
+  Long rows        : 6154
+  Short rows       : 622
+  Avg gross expo   : 0.854
+  Avg net expo     : 0.770
+  Sum net PnL      : ₹1,684,282
+
+BENCHMARK COMPARISON
+  Benchmark return : 93.89%
+  Benchmark CAGR   : 11.11%
+  Benchmark max DD : -34.56%
+  Excess return    : 266.13%
+
+REGIME BREAKDOWN
+  BULL     trades=3560 pnl=₹1,491,706 avg_gross=0.049 avg_conf=0.36
+  CHOP     trades=2197 pnl=₹173,666 avg_gross=0.031 avg_conf=0.31
+  BEAR     trades=1019 pnl=₹18,910 avg_gross=0.019 avg_conf=0.41
+
+SIDE BREAKDOWN
+  LONG  trades=6154 pnl=₹1,724,525 avg_w=0.041
+  SHORT trades=622  pnl=₹-40,244 avg_w=-0.021
+
+TRANSITION MATRIX
+to    BEAR  BULL  CHOP
+from                  
+BEAR    32     0     8
+BULL     1   163    14
+CHOP     8    15    66
+
+BREAK DIAGNOSTICS
+  Candidate break date : 2020-04-03
+  Break score          : 0.4112
+
+PRE / POST BREAK SPLIT
+  PRE  ret=-10.84% sharpe=-2.69 sortino=-2.81 win=37.5% vol=13.50% dd=-14.09%
+  POST ret=415.96% sharpe=1.37 sortino=2.21 win=59.6% vol=23.27% dd=-32.35%
+
+TOP ACTIVE WINNERS
+  2021-12-03  BCG          ₹33,044  w=0.094  state=BULL
+  2021-01-29  IIFL         ₹32,838  w=0.053  state=BULL
+  2021-05-28  THEMISMED    ₹31,183  w=0.059  state=BULL
+  2021-02-05  HEMIPROP     ₹30,648  w=0.100  state=BULL
+  2023-06-09  SAKSOFT      ₹30,385  w=0.100  state=BULL
+  2023-06-02  IZMO         ₹28,731  w=0.080  state=BULL
+  2021-02-26  SCI          ₹28,563  w=0.091  state=BULL
+  2023-09-01  ASHAPURMIN   ₹28,372  w=0.100  state=BULL
+  2021-10-29  ADSL         ₹25,529  w=0.055  state=BULL
+  2024-08-30  REFEX        ₹25,415  w=0.081  state=BULL
+
+TOP ACTIVE LOSERS
+  2020-07-03  ALOKINDS     ₹-29,744  w=0.100  state=CHOP
+  2024-11-01  MAANALU      ₹-24,967  w=0.071  state=BULL
+  2021-11-12  MANAPPURAM   ₹-20,872  w=0.100  state=BULL
+  2022-11-04  KSHITIJPOL   ₹-18,351  w=0.100  state=BULL
+  2022-09-16  NDTV         ₹-18,087  w=0.100  state=BULL
+  2025-06-27  SIGACHI      ₹-16,799  w=0.066  state=CHOP
+  2024-03-01  SWELECTES    ₹-16,292  w=0.066  state=BULL
+  2024-02-09  PTC          ₹-16,159  w=0.100  state=BULL
+  2022-05-06  NAVA         ₹-14,703  w=0.089  state=CHOP
+  2021-01-22  CHENNPETRO   ₹-14,485  w=0.057  state=BULL
