@@ -40,11 +40,32 @@ Chimera is a market-neutral dispersion engine designed to exploit cross-sectiona
 
 ## 📁 Repository Structure
 
-- `chimera_engine.py`: The core simulation and alpha engine.
-- `chimera_backtest_report.py`: Advanced diagnostics and visualization suite.
+```text
+chimera/
+├── config/
+│   └── paths.py
+├── data/
+│   ├── features/
+│   ├── market/
+│   └── news/
+├── engine/
+│   └── signal.py
+├── models/
+│   ├── alpha/
+│   └── regime/
+├── research/
+│   ├── experiments/
+│   │   └── backtest_report.py
+│   └── notebooks/
+├── run_all_backtests.py
+├── chimera_engine.py
+└── chimera_backtest_report.py
+```
+
+- `engine/signal.py`: Core simulation and signal engine.
+- `research/experiments/backtest_report.py`: Static diagnostics and visualization suite.
 - `run_all_backtests.py`: Master execution script.
-- `data/`: Reports and trade logs (raw data excluded).
+- `config/paths.py`: Centralized repo and data path configuration.
+- `chimera_engine.py` and `chimera_backtest_report.py`: Compatibility wrappers for older imports.
 
----
-
-> **Note**: This repository contains code and generated reports only. Market data in `chimera_data/` is excluded from the version control for size and license considerations.
+> **Note**: Raw market data still lives in `chimera_data/` by default and is excluded from version control for size and license reasons. Generated reports and derived artifacts live under `data/`.

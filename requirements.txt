@@ -23,5 +23,9 @@ numba>=0.58.0
 # Parquet file support (already included with pandas/polars, but explicit)
 pyarrow>=14.0.0
 
+# Optional NLP pipeline for news scoring
+# transformers>=4.40.0
+# torch>=2.2.0
+
 # Optional: VectorBT (for legacy regime swing strategies)
 # vectorbt>=0.26.0
