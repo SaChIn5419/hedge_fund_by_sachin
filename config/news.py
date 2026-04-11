@@ -89,7 +89,7 @@ FINBERT_MODEL_NAME = "ProsusAI/finbert"
 # help with regime confidence and trade suppression, not dominate the state call.
 REGIME_CONTEXT_WEIGHTS = {
     "attention_shock_z": 0.20,
-    "tone_z": 0.15,
+    "tone_z": 0.20,
     "novelty_z": 0.15,
     "policy_share_z": 0.15,
     "conflict_share_z": -0.25,
