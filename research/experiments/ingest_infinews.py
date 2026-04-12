@@ -63,7 +63,7 @@ def main() -> None:
     out["source"] = "MoneyControl"
     out["url"] = df["URL"].fillna("").astype(str)
     out["title"] = df["Title"].fillna("").astype(str)
-    out["description"] = df["Description"].fillna("").astype(str)
+    out["description"] = df.get("Description", pd.Series(dtype=str)).fillna("").astype(str)
     out["language"] = "en"
 
     # Extract domain
@@ -73,7 +73,7 @@ def main() -> None:
     out["article_id"] = out["url_hash"]
 
     # Topic tagging (on title + description + keywords if available)
-    keywords_col = df["Keywords"].fillna("").astype(str)
+    keywords_col = df.get("Keywords", pd.Series(dtype=str)).fillna("").astype(str)
     text = (out["title"].fillna("") + " " + out["description"].fillna("") + " " + keywords_col).str.lower()
 
     out["is_india"] = _keyword_hit(text, INDIA_KEYWORDS).astype(int)

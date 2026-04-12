@@ -4,9 +4,9 @@ Date range         : 2019-12-06 -> 2026-03-20
 Observations       : 308 daily rows
 
 MODEL COMPARISON
-  baseline                 conf=0.982 trans_risk=0.047 changes=46   bad_days=129  bad_loss=-304.88% suppressed_bad=1   
-  probabilistic_no_news    conf=0.982 trans_risk=0.047 changes=20   bad_days=129  bad_loss=-304.88% suppressed_bad=1   
-  probabilistic_with_news  conf=0.982 trans_risk=0.047 changes=20   bad_days=129  bad_loss=-304.88% suppressed_bad=1   
+  baseline                 conf=0.996 trans_risk=0.037 changes=46   bad_days=128  bad_loss=-305.07% suppressed_bad=1   
+  probabilistic_no_news    conf=0.996 trans_risk=0.037 changes=20   bad_days=128  bad_loss=-305.07% suppressed_bad=1   
+  probabilistic_with_news  conf=0.996 trans_risk=0.037 changes=20   bad_days=128  bad_loss=-305.07% suppressed_bad=1   
 
 STATE MIX
   baseline                 bull= 57.8% chop= 29.9% bear= 12.3%
