@@ -5,45 +5,45 @@ Benchmark          : ^NSEI
 
 PERFORMANCE
   Initial capital  : ₹1,000,000.00
-  Final equity     : ₹5,192,557.16
-  Total return     : 419.26%
-  CAGR             : 29.96%
+  Final equity     : ₹5,108,100.34
+  Total return     : 410.81%
+  CAGR             : 29.62%
 
 RISK
-  Volatility (ann.): 24.31%
-  Sharpe ratio     : 1.27
-  Sortino ratio    : 2.07
-  Max drawdown     : -35.48%
-  Calmar ratio     : 0.84
+  Volatility (ann.): 24.34%
+  Sharpe ratio     : 1.25
+  Sortino ratio    : 2.04
+  Max drawdown     : -34.92%
+  Calmar ratio     : 0.85
   Ulcer index      : 0.1259
-  VaR 95%          : -5.33%
-  CVaR 95%         : -6.58%
-  Skew / Kurtosis  : 0.15 / 0.65
+  VaR 95%          : -5.34%
+  CVaR 95%         : -6.65%
+  Skew / Kurtosis  : 0.14 / 0.72
 
 ACTIVITY
-  Trade rows       : 6751
-  Active rows      : 6751
+  Trade rows       : 6364
+  Active rows      : 6364
   Active dates     : 308
-  Long rows        : 6134
-  Short rows       : 617
-  Avg gross expo   : 0.945
-  Avg net expo     : 0.837
-  Sum net PnL      : ₹1,824,744
+  Long rows        : 5804
+  Short rows       : 560
+  Avg gross expo   : 0.924
+  Avg net expo     : 0.828
+  Sum net PnL      : ₹1,808,803
 
 BENCHMARK COMPARISON
   Benchmark return : 93.89%
   Benchmark CAGR   : 11.11%
   Benchmark max DD : -34.56%
-  Excess return    : 325.37%
+  Excess return    : 316.92%
 
 REGIME BREAKDOWN
-  BULL     trades=3550 pnl=₹1,563,751 avg_gross=0.050 avg_conf=1.00
-  CHOP     trades=2182 pnl=₹237,165 avg_gross=0.040 avg_conf=1.00
-  BEAR     trades=1019 pnl=₹23,828 avg_gross=0.025 avg_conf=0.99
+  BULL     trades=3340 pnl=₹1,516,136 avg_gross=0.052 avg_conf=0.96
+  CHOP     trades=2095 pnl=₹266,468 avg_gross=0.041 avg_conf=0.96
+  BEAR     trades=929  pnl=₹26,199 avg_gross=0.026 avg_conf=0.93
 
 SIDE BREAKDOWN
-  LONG  trades=6134 pnl=₹1,875,686 avg_w=0.045
-  SHORT trades=617  pnl=₹-50,942 avg_w=-0.027
+  LONG  trades=5804 pnl=₹1,818,847 avg_w=0.047
+  SHORT trades=560  pnl=₹-10,044 avg_w=-0.026
 
 TRANSITION MATRIX
 to    BEAR  BULL  CHOP
@@ -57,28 +57,28 @@ BREAK DIAGNOSTICS
   Break score          : 0.4112
 
 PRE / POST BREAK SPLIT
-  PRE  ret=-13.80% sharpe=-2.69 sortino=-2.79 win=37.5% vol=17.35% dd=-17.78%
-  POST ret=502.37% sharpe=1.43 sortino=2.38 win=59.6% vol=24.52% dd=-35.48%
+  PRE  ret=-12.02% sharpe=-2.23 sortino=-2.46 win=37.5% vol=17.92% dd=-17.35%
+  POST ret=480.60% sharpe=1.40 sortino=2.30 win=59.6% vol=24.55% dd=-34.92%
 
 TOP ACTIVE WINNERS
   2021-01-29  IIFL         ₹45,526  w=0.073  state=BULL
   2021-05-28  THEMISMED    ₹33,920  w=0.064  state=BULL
   2022-06-03  MRPL         ₹30,969  w=0.070  state=CHOP
+  2020-09-25  RAMCOSYS     ₹30,695  w=0.100  state=CHOP
+  2020-11-13  ATGL         ₹30,462  w=0.080  state=BULL
   2021-12-03  BCG          ₹29,553  w=0.084  state=BULL
   2023-06-02  IZMO         ₹28,188  w=0.078  state=BULL
   2021-10-29  ADSL         ₹26,996  w=0.058  state=BULL
+  2021-02-26  SCI          ₹25,971  w=0.082  state=BULL
   2024-08-30  REFEX        ₹25,193  w=0.080  state=BULL
-  2021-02-26  SCI          ₹24,907  w=0.079  state=BULL
-  2023-08-04  ZENTEC       ₹24,681  w=0.069  state=BULL
-  2023-06-09  SAKSOFT      ₹24,376  w=0.080  state=BULL
 
 TOP ACTIVE LOSERS
   2020-07-03  ALOKINDS     ₹-29,744  w=0.100  state=CHOP
   2024-11-01  MAANALU      ₹-27,890  w=0.080  state=BULL
   2025-06-27  SIGACHI      ₹-20,823  w=0.082  state=CHOP
   2022-11-04  KSHITIJPOL   ₹-18,351  w=0.100  state=BULL
+  2022-09-16  NDTV         ₹-18,087  w=0.100  state=BULL
   2024-03-01  SWELECTES    ₹-17,555  w=0.071  state=BULL
-  2020-01-10  SPENCERS     ₹-17,474  w=-0.063  state=CHOP
   2021-11-12  MANAPPURAM   ₹-16,986  w=0.081  state=BULL
   2026-02-27  RNBDENIMS    ₹-16,693  w=0.090  state=CHOP
   2021-12-10  AURUM        ₹-15,478  w=0.081  state=BULL
