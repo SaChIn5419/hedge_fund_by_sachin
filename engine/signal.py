@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from config.paths import DATA_DIR, NEWS_DAILY_FEATURES_PATH, PRIMARY_TRADELOG, REGIME_TRACE_PATH, REPO_ROOT, WEEKLY_TRACE_PATH
+from agents.dexter.normalize import prepare_for_calendar as prepare_dexter_for_calendar
+from config.paths import DATA_DIR, DEXTER_RESEARCH_FEATURES_PATH, NEWS_DAILY_FEATURES_PATH, PRIMARY_TRADELOG, REGIME_TRACE_PATH, REPO_ROOT, WEEKLY_TRACE_PATH
 from models.regime.context import score_news_regime_context
 from models.regime.probabilistic import RegimeFeatures, RegimeProbabilities, infer_regime_probabilities
 
@@ -205,26 +206,42 @@ class ChimeraEngineNormal:
         self.prev_regime_probs: Optional[RegimeProbabilities] = None
 
     def load_news_context(self, calendar_index: pd.DatetimeIndex) -> Optional[pd.DataFrame]:
-        if not os.path.exists(NEWS_DAILY_FEATURES_PATH):
-            return None
-        try:
-            if str(NEWS_DAILY_FEATURES_PATH).endswith('.csv'):
-                context = pd.read_csv(NEWS_DAILY_FEATURES_PATH)
-            else:
-                context = pd.read_parquet(NEWS_DAILY_FEATURES_PATH)
-        except Exception as exc:
-            print(f'Error loading news context: {exc}')
-            return None
-
-        if context.empty or 'date' not in context.columns:
-            return None
-
-        context = context.copy()
-        context['date'] = pd.to_datetime(context['date']).dt.normalize()
-        context = context.sort_values('date').drop_duplicates(subset=['date'], keep='last')
-        context = context.set_index('date').reindex(pd.to_datetime(calendar_index).normalize()).ffill()
+        calendar = pd.to_datetime(calendar_index).normalize()
+        context = pd.DataFrame(index=calendar)
         context.index.name = 'date'
-        return context
+        loaded_any = False
+
+        if os.path.exists(NEWS_DAILY_FEATURES_PATH):
+            try:
+                if str(NEWS_DAILY_FEATURES_PATH).endswith('.csv'):
+                    news_context = pd.read_csv(NEWS_DAILY_FEATURES_PATH)
+                else:
+                    news_context = pd.read_parquet(NEWS_DAILY_FEATURES_PATH)
+                if not news_context.empty and 'date' in news_context.columns:
+                    news_context = news_context.copy()
+                    news_context['date'] = pd.to_datetime(news_context['date']).dt.normalize()
+                    news_context = news_context.sort_values('date').drop_duplicates(subset=['date'], keep='last')
+                    news_context = news_context.set_index('date').reindex(calendar).ffill()
+                    context = context.join(news_context, how='left')
+                    loaded_any = True
+            except Exception as exc:
+                print(f'Error loading news context: {exc}')
+
+        if os.path.exists(DEXTER_RESEARCH_FEATURES_PATH):
+            try:
+                dexter_context = pd.read_parquet(DEXTER_RESEARCH_FEATURES_PATH)
+                if not dexter_context.empty and ('date' in dexter_context.columns or 'as_of_date' in dexter_context.columns):
+                    dexter_context = prepare_dexter_for_calendar(dexter_context, calendar)
+                    dexter_context = dexter_context.set_index('date')
+                    dexter_context = dexter_context.add_prefix('dexter_')
+                    context = context.join(dexter_context, how='left')
+                    loaded_any = True
+            except Exception as exc:
+                print(f'Error loading Dexter context: {exc}')
+
+        if not loaded_any:
+            return None
+        return context.ffill()
 
     def load_all_stocks(self) -> Dict[str, pd.DataFrame]:
         data_map: Dict[str, pd.DataFrame] = {}
