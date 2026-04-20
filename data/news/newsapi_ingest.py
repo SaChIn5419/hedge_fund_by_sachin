@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
@@ -53,8 +54,11 @@ def fetch_newsapi_articles(
     to_date: str | None = None,
     page_size: int = 100,
     max_pages: int = 3,
+    ingestion_as_of_ist: str = "",
+    publication_cutoff_utc: str = "",
 ) -> pd.DataFrame:
     rows: list[dict] = []
+    fetched_at_utc = datetime.now(timezone.utc).isoformat()
     for page in range(1, max_pages + 1):
         url = build_newsapi_url(api_key, query=query, from_date=from_date, to_date=to_date, page_size=page_size, page=page)
         req = Request(url, headers={"User-Agent": "chimera-news-pipeline/1.0"})
@@ -66,7 +70,12 @@ def fetch_newsapi_articles(
         rows.extend(articles)
         if len(articles) < page_size:
             break
-    return normalize_newsapi_articles(pd.DataFrame(rows))
+    normalized = normalize_newsapi_articles(pd.DataFrame(rows))
+    if not normalized.empty:
+        normalized["fetched_at_utc"] = fetched_at_utc
+        normalized["ingestion_as_of_ist"] = ingestion_as_of_ist
+        normalized["publication_cutoff_utc"] = publication_cutoff_utc
+    return normalized
 
 
 def normalize_newsapi_articles(df: pd.DataFrame) -> pd.DataFrame:
@@ -74,7 +83,10 @@ def normalize_newsapi_articles(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=NEWS_REQUIRED_COLUMNS)
 
     out = pd.DataFrame()
-    out["published_at"] = pd.to_datetime(df.get("publishedAt"), errors="coerce").dt.tz_localize(None)
+    out["published_at"] = pd.to_datetime(df.get("publishedAt"), errors="coerce", utc=True).dt.tz_convert(None)
+    out["fetched_at_utc"] = ""
+    out["ingestion_as_of_ist"] = ""
+    out["publication_cutoff_utc"] = ""
     source_col = df.get("source")
     if source_col is not None:
         out["source"] = source_col.map(lambda x: x.get("name", "") if isinstance(x, dict) else "")
@@ -116,8 +128,12 @@ def merge_article_cache(existing_path: Path | str, new_articles: pd.DataFrame) -
         merged = merged.drop_duplicates(subset=["url_hash"], keep="last")
     else:
         merged = new_articles.copy()
+    for col in NEWS_REQUIRED_COLUMNS:
+        if col not in merged.columns:
+            merged[col] = 0 if col.startswith(("is_", "topic_", "relevance")) else ""
     merged = merged.sort_values("published_at").reset_index(drop=True)
     existing_path.parent.mkdir(parents=True, exist_ok=True)
+    merged = merged[NEWS_REQUIRED_COLUMNS]
     merged.to_parquet(existing_path, index=False)
     return merged
 

@@ -5,6 +5,9 @@ NEWSAPI_BASE_URL = "https://newsapi.org/v2/everything"
 NEWS_REQUIRED_COLUMNS = [
     "article_id",
     "published_at",
+    "fetched_at_utc",
+    "ingestion_as_of_ist",
+    "publication_cutoff_utc",
     "source",
     "domain",
     "url",
