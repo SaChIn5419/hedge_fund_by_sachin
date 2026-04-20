@@ -227,7 +227,10 @@ class ChimeraEngineNormal:
             except Exception as exc:
                 print(f'Error loading news context: {exc}')
 
-        if os.path.exists(DEXTER_RESEARCH_FEATURES_PATH):
+        disable_dexter = os.environ.get('CHIMERA_DISABLE_DEXTER', '').lower() in {'1', 'true', 'yes', 'y'}
+        if disable_dexter:
+            print('Dexter context disabled by CHIMERA_DISABLE_DEXTER')
+        if (not disable_dexter) and os.path.exists(DEXTER_RESEARCH_FEATURES_PATH):
             try:
                 dexter_context = pd.read_parquet(DEXTER_RESEARCH_FEATURES_PATH)
                 if not dexter_context.empty and ('date' in dexter_context.columns or 'as_of_date' in dexter_context.columns):

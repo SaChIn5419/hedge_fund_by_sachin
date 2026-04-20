@@ -54,3 +54,11 @@ python -m research.experiments.dexter_validation_report
 ```
 
 The first runs may report `insufficient_observations`; that is expected until Dexter has forward history.
+
+Run paired regime ablation:
+
+```bash
+python -m research.experiments.run_dexter_ablation
+```
+
+The base leg sets `CHIMERA_DISABLE_DEXTER=1`; the Dexter leg uses the normal engine path.
