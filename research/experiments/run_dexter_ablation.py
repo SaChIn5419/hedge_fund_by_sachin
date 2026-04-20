@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Dict
 
@@ -50,6 +51,22 @@ def _run_engine(label: str, output_dir: Path, *, disable_dexter: bool) -> Dict[s
         shutil.copy2(src, dst)
         copied[key] = dst
     return copied
+
+
+def _backup_primary_outputs(tmp_dir: Path) -> Dict[Path, Path]:
+    backups: Dict[Path, Path] = {}
+    for src in OUTPUT_FILES.values():
+        if Path(src).exists():
+            dst = tmp_dir / Path(src).name
+            shutil.copy2(src, dst)
+            backups[Path(src)] = dst
+    return backups
+
+
+def _restore_primary_outputs(backups: Dict[Path, Path]) -> None:
+    for src, backup in backups.items():
+        if backup.exists():
+            shutil.copy2(backup, src)
 
 
 def _turnover(trades: pd.DataFrame) -> pd.DataFrame:
@@ -130,8 +147,13 @@ def main() -> None:
     args = parse_args()
     output_dir = Path(args.output_dir)
     if not args.skip_runs:
-        _run_engine("base", output_dir, disable_dexter=True)
-        _run_engine("dexter", output_dir, disable_dexter=False)
+        with tempfile.TemporaryDirectory(prefix="chimera_dexter_ablation_") as tmp:
+            backups = _backup_primary_outputs(Path(tmp))
+            try:
+                _run_engine("base", output_dir, disable_dexter=True)
+                _run_engine("dexter", output_dir, disable_dexter=False)
+            finally:
+                _restore_primary_outputs(backups)
 
     comparison, text = _compare(output_dir, args.friction_bps)
     output_dir.mkdir(parents=True, exist_ok=True)
