@@ -46,3 +46,11 @@ The production gates live in `agents/dexter/validation.py`.
 - `spillover_amplifier` should be validated against time-varying India/global correlation, preferably DCC-GARCH, not only hard percentile buckets.
 - Defensive regime shifts must clear transaction costs: preserved capital must exceed `2x` estimated round-trip rebalance friction.
 - Dexter remains a brake, not the driver. Even after forward validation, its influence is capped at `25-30%` of the news layer.
+
+Run the validation report:
+
+```bash
+python -m research.experiments.dexter_validation_report
+```
+
+The first runs may report `insufficient_observations`; that is expected until Dexter has forward history.

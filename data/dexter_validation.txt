@@ -1,0 +1,46 @@
+DEXTER VALIDATION REPORT
+========================================================================
+Rows                 : 308
+Date range           : 2019-12-06 -> 2026-03-20
+News features        : 13
+Dexter features      : 0
+Validation contract  : {'redundancy': {'max_abs_spearman': 0.75, 'max_rolling_median_abs_spearman': 0.7, 'max_rolling_p75_abs_spearman': 0.8, 'max_vif': 5.0, 'hard_max_vif': 10.0, 'stationarized_only': True}, 'incremental_value': {'min_weekly_return_oos_r2_gain': 0.0015, 'min_classification_auc_gain': 0.01, 'min_balanced_accuracy_gain': 0.02, 'min_positive_rolling_ic_share': 0.55}, 'spillover': {'min_dynamic_corr_beta': 0.0, 'min_bucket_corr_lift': 0.1, 'min_weekly_high_spillover_observations': 30, 'bootstrap_p_value_warn': 0.1, 'bootstrap_p_value_promote': 0.05, 'prefer_dcc_garch': True}, 'regime_utility': {'max_false_defensive_rate_increase': 0.1, 'min_drawdown_warning_recall_gain': 0.05, 'min_average_lead_rebalances': 1.0, 'min_saved_capital_to_friction_multiple': 2.0}, 'stability': {'min_same_sign_rolling_window_share': 0.6, 'max_single_period_edge_contribution': 0.35}, 'production_weight': {'telemetry_only_weight': 0.0, 'weak_pass_max_news_layer_weight': 0.15, 'forward_validated_max_news_layer_weight': 0.3}}
+
+WARNING: No non-constant stationarized Dexter features. Forward history is insufficient.
+
+REDUNDANCY SUMMARY
+  No correlation pairs computed.
+
+VIF SUMMARY
+            feature          vif    status
+          novelty_z 1.000000e+09 hard_fail
+    banking_share_z 1.000000e+09 hard_fail
+global_risk_share_z 1.000000e+09 hard_fail
+  liquidity_share_z 1.000000e+09 hard_fail
+   conflict_share_z 1.000000e+09 hard_fail
+             tone_z 3.756729e+01 hard_fail
+    negative_tone_z 3.739589e+01 hard_fail
+      macro_share_z 1.866952e+01 hard_fail
+     policy_share_z 1.172887e+01 hard_fail
+     growth_share_z 6.034453e+00      fail
+  inflation_share_z 1.679927e+00      pass
+  attention_shock_z 1.054531e+00      pass
+        oil_share_z 1.022635e+00      pass
+
+INCREMENTAL VALUE
+                   target            metric  baseline  with_dexter  incremental_gain  threshold                      status
+  target_next_week_return            oos_r2 -0.039399    -0.039399               0.0     0.0015 insufficient_dexter_history
+target_next_week_downside               auc  0.507885     0.507885               0.0     0.0100 insufficient_dexter_history
+target_next_week_downside balanced_accuracy  0.505102     0.505102               0.0     0.0200 insufficient_dexter_history
+  target_next_week_stress               auc  0.329412     0.329412               0.0     0.0100 insufficient_dexter_history
+  target_next_week_stress balanced_accuracy  0.373235     0.373235               0.0     0.0200 insufficient_dexter_history
+
+SPILLOVER
+                             feature               test  value  threshold                    status                                                                                    note
+dexter_spillover_amplifier_effective dynamic_corr_proxy    NaN        0.0 insufficient_observations DCC-GARCH validation requires a global benchmark return series and more Dexter history.
+      dexter_spillover_amplifier_z60 dynamic_corr_proxy    NaN        0.0 insufficient_observations DCC-GARCH validation requires a global benchmark return series and more Dexter history.
+
+REGIME UTILITY
+                            metric    value  threshold              status                                                                                note
+              false_defensive_rate 0.466667        0.1 diagnostic_baseline Requires base-vs-Dexter regime traces and friction assumptions for final pass/fail.
+saved_capital_to_friction_multiple      NaN        2.0             pending    Compute after paired base/Dexter trace run with turnover and friction estimates.

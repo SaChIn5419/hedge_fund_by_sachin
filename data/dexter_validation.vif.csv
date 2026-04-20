@@ -1,0 +1,14 @@
+feature,vif,status
+novelty_z,999999999.9999999,hard_fail
+banking_share_z,999999999.9999999,hard_fail
+global_risk_share_z,999999999.9999999,hard_fail
+liquidity_share_z,999999999.9999999,hard_fail
+conflict_share_z,999999999.9999999,hard_fail
+tone_z,37.56729382966398,hard_fail
+negative_tone_z,37.39589119294944,hard_fail
+macro_share_z,18.669520944959185,hard_fail
+policy_share_z,11.728865493922989,hard_fail
+growth_share_z,6.034453411094847,fail
+inflation_share_z,1.6799268579061382,pass
+attention_shock_z,1.0545305108460734,pass
+oil_share_z,1.0226347539350118,pass
