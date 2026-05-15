@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Chimera Daily Telemetry Pipeline at 08:50 AM IST
+Wants=network-online.target
+
+[Timer]
+OnCalendar=*-*-* 08:50:00
+Persistent=true
+Unit=chimera-telemetry.service
+
+[Install]
+WantedBy=timers.target

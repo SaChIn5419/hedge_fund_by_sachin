@@ -93,15 +93,55 @@ def _build_equity_curve(trades: pd.DataFrame, capital: float = 1_000_000) -> pd.
     return daily
 
 
+def _detect_multiple_breaks(strategy_ret: pd.Series, bench_ret: pd.Series, dates: pd.Series, max_breaks: int = 3, min_size: int = 30) -> List[Tuple[pd.Timestamp, float]]:
+    """
+    Recursively detects structural breaks using the CUSUM of Alpha.
+    Returns a list of (date, score) sorted by prominence.
+    """
+    all_breaks = []
+
+    def find_best_break(s_ret, b_ret, d_series):
+        alpha = (s_ret - b_ret).fillna(0.0)
+        if len(alpha) < min_size:
+            return None, 0.0
+        demeaned = alpha - alpha.mean()
+        cusum = demeaned.cumsum()
+        idx = int(np.argmax(np.abs(cusum.to_numpy())))
+        return pd.to_datetime(d_series.iloc[idx]), float(np.abs(cusum.iloc[idx]))
+
+    segments = [(strategy_ret, bench_ret, dates)]
+    
+    while segments and len(all_breaks) < max_breaks:
+        s_ret, b_ret, d_series = segments.pop(0)
+        date, score = find_best_break(s_ret, b_ret, d_series)
+        
+        if date is None or score <= 0:
+            continue
+            
+        all_breaks.append((date, score))
+        split_idx = int(np.where(d_series == date)[0][0])
+        segments.append((s_ret.iloc[:split_idx], b_ret.iloc[:split_idx], d_series.iloc[:split_idx]))
+        segments.append((s_ret.iloc[split_idx+1:], b_ret.iloc[split_idx+1:], d_series.iloc[split_idx+1:]))
+    
+    return sorted(all_breaks, key=lambda x: x[1], reverse=True)[:max_breaks]
+
+
 def _detect_break_date(strategy_ret: pd.Series, bench_ret: pd.Series, dates: pd.Series) -> Tuple[Optional[pd.Timestamp], float]:
-    alpha = (strategy_ret - bench_ret).fillna(0.0)
-    if len(alpha) < 20:
+    """Simple wrapper to find the single most prominent structural break."""
+    breaks = _detect_multiple_breaks(strategy_ret, bench_ret, dates, max_breaks=1)
+    if not breaks:
         return None, 0.0
-    demeaned = alpha - alpha.mean()
-    cusum = demeaned.cumsum()
-    idx = int(np.argmax(np.abs(cusum.to_numpy())))
-    score = float(np.abs(cusum.iloc[idx]))
-    return pd.to_datetime(dates.iloc[idx]), score
+    return breaks[0]
+
+
+
+
+
+
+
+
+
+
 
 
 def _make_transition_table(state_series: pd.Series) -> pd.DataFrame:

@@ -1,34 +1,34 @@
 CHIMERA REGIME VALIDATION REPORT
 ================================================================
-Date range         : 2019-12-06 -> 2026-03-20
-Observations       : 308 daily rows
+Date range         : 2019-12-06 -> 2026-05-08
+Observations       : 313 daily rows
 
 MODEL COMPARISON
-  baseline                 conf=0.951 trans_risk=0.069 changes=46   bad_days=128  bad_loss=-305.96% suppressed_bad=14  
-  probabilistic_no_news    conf=0.951 trans_risk=0.069 changes=20   bad_days=128  bad_loss=-305.96% suppressed_bad=14  
-  probabilistic_with_news  conf=0.951 trans_risk=0.069 changes=20   bad_days=128  bad_loss=-305.96% suppressed_bad=14  
+  baseline                 conf=0.950 trans_risk=0.068 changes=47   bad_days=131  bad_loss=-308.47% suppressed_bad=14  
+  probabilistic_no_news    conf=0.950 trans_risk=0.068 changes=20   bad_days=131  bad_loss=-308.47% suppressed_bad=14  
+  probabilistic_with_news  conf=0.950 trans_risk=0.068 changes=20   bad_days=131  bad_loss=-308.47% suppressed_bad=14  
 
 STATE MIX
-  baseline                 bull= 57.8% chop= 29.9% bear= 12.3%
-  probabilistic_no_news    bull= 81.2% chop=  0.0% bear= 18.8%
-  probabilistic_with_news  bull= 81.2% chop=  0.0% bear= 18.8%
+  baseline                 bull= 56.9% chop= 30.4% bear= 12.8%
+  probabilistic_no_news    bull= 79.9% chop=  0.0% bear= 20.1%
+  probabilistic_with_news  bull= 79.9% chop=  0.0% bear= 20.1%
 
 BASELINE VS PROBABILISTIC+NEWS
 prob_with_news  BEAR  BULL
 baseline                  
-BEAR              38     0
+BEAR              40     0
 BULL               0   178
-CHOP              20    72
+CHOP              23    72
 
 BASELINE VS PROBABILISTIC WITHOUT NEWS
 prob_no_news  BEAR  BULL
 baseline                
-BEAR            38     0
+BEAR            40     0
 BULL             0   178
-CHOP            20    72
+CHOP            23    72
 
 SUPPRESSION WINDOW SUMMARY
   Suppression days  : 35
-  Avg return        : 0.640%
+  Avg return        : 0.642%
   Avg transition risk: 0.196
   Avg news bias     : -0.203

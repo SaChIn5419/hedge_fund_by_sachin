@@ -1,0 +1,15 @@
+[Unit]
+Description=Chimera Daily Telemetry Pipeline
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sachindb
+WorkingDirectory=/home/sachindb/Documents/hedgefund_chimera
+ExecStart=/home/sachindb/Documents/hedgefund_chimera/scripts/telemetry/daily_chimera_pipeline.sh
+StandardOutput=append:/home/sachindb/Documents/hedgefund_chimera/data/telemetry/pipeline_log.txt
+StandardError=append:/home/sachindb/Documents/hedgefund_chimera/data/telemetry/pipeline_log.txt
+
+[Install]
+WantedBy=multi-user.target
