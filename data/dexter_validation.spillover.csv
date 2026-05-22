@@ -1,3 +1,0 @@
-feature,test,value,threshold,status,note
-dexter_spillover_amplifier_effective,dynamic_corr_proxy,,0.0,insufficient_observations,DCC-GARCH validation requires a global benchmark return series and more Dexter history.
-dexter_spillover_amplifier_z60,dynamic_corr_proxy,,0.0,insufficient_observations,DCC-GARCH validation requires a global benchmark return series and more Dexter history.

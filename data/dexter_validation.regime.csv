@@ -1,3 +1,0 @@
-metric,value,threshold,status,note
-false_defensive_rate,0.4666666666666667,0.1,diagnostic_baseline,Requires base-vs-Dexter regime traces and friction assumptions for final pass/fail.
-saved_capital_to_friction_multiple,,2.0,pending,Compute after paired base/Dexter trace run with turnover and friction estimates.

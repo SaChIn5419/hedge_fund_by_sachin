@@ -9,8 +9,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from agents.dexter.normalize import prepare_for_calendar as prepare_dexter_for_calendar
-from config.paths import DATA_DIR, DEXTER_RESEARCH_FEATURES_PATH, NEWS_DAILY_FEATURES_PATH, PRIMARY_TRADELOG, REGIME_TRACE_PATH, REPO_ROOT, WEEKLY_TRACE_PATH
+from config.paths import DATA_DIR, NEWS_DAILY_FEATURES_PATH, PRIMARY_TRADELOG, REGIME_TRACE_PATH, REPO_ROOT, WEEKLY_TRACE_PATH
 from models.regime.context import score_news_regime_context
 from models.regime.probabilistic import RegimeFeatures, RegimeProbabilities, infer_regime_probabilities
 
@@ -226,21 +225,6 @@ class ChimeraEngineNormal:
                     loaded_any = True
             except Exception as exc:
                 print(f'Error loading news context: {exc}')
-
-        disable_dexter = os.environ.get('CHIMERA_DISABLE_DEXTER', '').lower() in {'1', 'true', 'yes', 'y'}
-        if disable_dexter:
-            print('Dexter context disabled by CHIMERA_DISABLE_DEXTER')
-        if (not disable_dexter) and os.path.exists(DEXTER_RESEARCH_FEATURES_PATH):
-            try:
-                dexter_context = pd.read_parquet(DEXTER_RESEARCH_FEATURES_PATH)
-                if not dexter_context.empty and ('date' in dexter_context.columns or 'as_of_date' in dexter_context.columns):
-                    dexter_context = prepare_dexter_for_calendar(dexter_context, calendar)
-                    dexter_context = dexter_context.set_index('date')
-                    dexter_context = dexter_context.add_prefix('dexter_')
-                    context = context.join(dexter_context, how='left')
-                    loaded_any = True
-            except Exception as exc:
-                print(f'Error loading Dexter context: {exc}')
 
         if not loaded_any:
             return None

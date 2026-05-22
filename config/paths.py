@@ -18,8 +18,6 @@ NEWS_SCORED_DIR = NEWS_DATA_DIR / 'scored'
 NEWSAPI_ARTICLES_PATH = NEWS_PROCESSED_DIR / 'newsapi_articles.parquet'
 FINBERT_SCORES_PATH = NEWS_SCORED_DIR / 'finbert_scores.parquet'
 NEWS_DAILY_FEATURES_PATH = FEATURES_DATA_DIR / 'news_daily_features.parquet'
-DEXTER_RESEARCH_FEATURES_PATH = FEATURES_DATA_DIR / 'dexter_research_features.parquet'
-DEXTER_AUDIT_DIR = NEWS_DATA_DIR / 'dexter'
 
 PRIMARY_TRADELOG = OUTPUT_DATA_DIR / 'tradelog_chimera_fip.csv'
 REGIME_TRACE_PATH = OUTPUT_DATA_DIR / 'regime_trace_chimera_fip.csv'
