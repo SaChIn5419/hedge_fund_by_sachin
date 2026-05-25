@@ -1,0 +1,127 @@
+/* Dashboard Theme - Dark Terminal Aesthetic */
+body {
+    background-color: #0D1117;
+    color: #FFFFFF;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #E6EDF3;
+    font-weight: 600;
+}
+
+.kpi-value, .monospace {
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', Courier, monospace;
+}
+
+/* Sidebar styling */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    background-color: #161B22;
+    padding: 20px;
+    border-right: 1px solid #30363D;
+    z-index: 1000;
+}
+
+.sidebar a {
+    display: block;
+    color: #8B949E;
+    text-decoration: none;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar a:hover, .sidebar a.active {
+    background-color: #21262D;
+    color: #FFFFFF;
+}
+
+/* Main Content styling */
+.content {
+    margin-left: 290px;
+    padding: 20px 40px;
+}
+
+/* Top Navbar styling */
+.navbar {
+    background-color: #161B22;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #30363D;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Card styling */
+.card {
+    background-color: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0 10px rgba(0, 180, 216, 0.15);
+}
+
+/* Regime Colors */
+.regime-bull { color: #00FF88; }
+.regime-bear { color: #FF4560; }
+.regime-chop { color: #FFC107; }
+
+.regime-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.85em;
+    text-transform: uppercase;
+}
+.regime-badge.bull { background-color: rgba(0, 255, 136, 0.2); color: #00FF88; border: 1px solid rgba(0, 255, 136, 0.5); }
+.regime-badge.bear { background-color: rgba(255, 69, 96, 0.2); color: #FF4560; border: 1px solid rgba(255, 69, 96, 0.5); }
+.regime-badge.chop { background-color: rgba(255, 193, 7, 0.2); color: #FFC107; border: 1px solid rgba(255, 193, 7, 0.5); }
+
+/* KPI Tile */
+.kpi-tile {
+    text-align: center;
+    padding: 15px;
+}
+.kpi-title {
+    color: #8B949E;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.kpi-value {
+    font-size: 1.8em;
+    font-weight: bold;
+}
+.kpi-positive { color: #00FF88; }
+.kpi-negative { color: #FF4560; }
+.kpi-neutral { color: #E6EDF3; }
+
+/* Data tables */
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th {
+    background-color: #21262D !important;
+    color: #8B949E !important;
+    border: 1px solid #30363D !important;
+    font-weight: 600;
+}
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td {
+    background-color: #161B22 !important;
+    color: #E6EDF3 !important;
+    border: 1px solid #30363D !important;
+}
