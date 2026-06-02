@@ -5,45 +5,44 @@ Benchmark          : ^NSEI
 
 PERFORMANCE
   Initial capital  : ₹1,000,000.00
-  Final equity     : ₹4,686,250.66
-  Total return     : 368.63%
-  CAGR             : 27.02%
+  Final equity     : ₹17,743,555.76
+  Total return     : 1674.36%
+  CAGR             : 56.10%
 
 RISK
-  Volatility (ann.): 22.15%
-  Sharpe ratio     : 1.26
-  Sortino ratio    : 1.94
-  Max drawdown     : -28.71%
-  Calmar ratio     : 0.94
-  Ulcer index      : 0.1282
-  VaR 95%          : -4.65%
-  CVaR 95%         : -6.43%
-  Skew / Kurtosis  : 0.22 / 1.52
+  Volatility (ann.): 22.31%
+  Sharpe ratio     : 2.25
+  Sortino ratio    : 3.29
+  Max drawdown     : -22.17%
+  Calmar ratio     : 2.53
+  Ulcer index      : 0.0615
+  VaR 95%          : -3.99%
+  CVaR 95%         : -6.10%
+  Skew / Kurtosis  : -0.18 / 1.69
 
 ACTIVITY
-  Trade rows       : 6539
-  Active rows      : 6539
+  Trade rows       : 5893
+  Active rows      : 5893
   Active dates     : 315
-  Long rows        : 5944
-  Short rows       : 595
-  Avg gross expo   : 0.772
-  Avg net expo     : 0.703
-  Sum net PnL      : ₹1,695,403
+  Long rows        : 5893
+  Short rows       : 0
+  Avg gross expo   : 0.887
+  Avg net expo     : 0.887
+  Sum net PnL      : ₹3,038,939
 
 BENCHMARK COMPARISON
   Benchmark return : 98.96%
   Benchmark CAGR   : 11.24%
   Benchmark max DD : -34.56%
-  Excess return    : 269.66%
+  Excess return    : 1575.39%
 
 REGIME BREAKDOWN
-  BULL     trades=3340 pnl=₹1,523,451 avg_gross=0.052 avg_conf=0.96
-  CHOP     trades=2220 pnl=₹124,324 avg_gross=0.019 avg_conf=0.95
-  BEAR     trades=979  pnl=₹47,629 avg_gross=0.026 avg_conf=0.93
+  BULL     trades=3340 pnl=₹2,035,190 avg_gross=0.052 avg_conf=0.96
+  CHOP     trades=1810 pnl=₹704,811 avg_gross=0.043 avg_conf=0.95
+  BEAR     trades=743  pnl=₹298,938 avg_gross=0.039 avg_conf=0.93
 
 SIDE BREAKDOWN
-  LONG  trades=5944 pnl=₹1,723,358 avg_w=0.039
-  SHORT trades=595  pnl=₹-27,954 avg_w=-0.018
+  LONG  trades=5893 pnl=₹3,038,939 avg_w=0.047
 
 TRANSITION MATRIX
 to    BEAR  BULL  CHOP
@@ -57,29 +56,29 @@ BREAK DIAGNOSTICS
   Break score          : 0.4117
 
 PRE / POST BREAK SPLIT
-  PRE  ret=-11.27% sharpe=-2.65 sortino=-2.59 win=37.5% vol=14.24% dd=-14.37%
-  POST ret=428.16% sharpe=1.41 sortino=2.18 win=59.2% vol=22.41% dd=-28.71%
+  PRE  ret=-17.09% sharpe=-2.08 sortino=-1.83 win=50.0% vol=27.34% dd=-22.17%
+  POST ret=2040.11% sharpe=2.57 sortino=4.19 win=65.9% vol=21.78% dd=-15.39%
 
 TOP ACTIVE WINNERS
-  2021-01-29  IIFL         ₹44,339  w=0.071  state=BULL
-  2021-05-28  THEMISMED    ₹33,963  w=0.065  state=BULL
-  2020-11-13  ATGL         ₹30,462  w=0.080  state=BULL
-  2021-12-03  BCG          ₹29,576  w=0.084  state=BULL
-  2023-06-02  IZMO         ₹28,172  w=0.078  state=BULL
-  2021-02-26  SCI          ₹25,916  w=0.082  state=BULL
-  2021-10-29  ADSL         ₹25,454  w=0.055  state=BULL
-  2024-08-30  REFEX        ₹25,192  w=0.080  state=BULL
-  2021-02-05  HEMIPROP     ₹24,993  w=0.082  state=BULL
-  2023-08-04  ZENTEC       ₹24,771  w=0.069  state=BULL
+  2022-01-07  COASTCORP    ₹37,899  w=0.100  state=BULL
+  2025-06-20  QPOWER       ₹31,528  w=0.100  state=CHOP
+  2024-08-23  UMAEXPORTS   ₹31,464  w=0.079  state=BULL
+  2024-06-14  PARAS        ₹30,802  w=0.067  state=BULL
+  2020-08-14  AARTIDRUGS   ₹30,044  w=0.079  state=BULL
+  2022-04-08  SUNFLAG      ₹28,258  w=0.058  state=BULL
+  2020-04-03  DIVISLAB     ₹27,225  w=0.100  state=BEAR
+  2020-11-13  AGI          ₹24,410  w=0.100  state=BULL
+  2022-07-29  DEEPAKFERT   ₹23,471  w=0.100  state=CHOP
+  2024-06-14  RCF          ₹23,378  w=0.071  state=BULL
 
 TOP ACTIVE LOSERS
-  2020-07-03  ALOKINDS     ₹-29,581  w=0.099  state=CHOP
-  2024-11-01  MAANALU      ₹-27,875  w=0.080  state=BULL
-  2022-11-04  KSHITIJPOL   ₹-18,351  w=0.100  state=BULL
-  2022-09-16  NDTV         ₹-18,087  w=0.100  state=BULL
-  2024-03-01  SWELECTES    ₹-17,500  w=0.071  state=BULL
-  2021-11-12  MANAPPURAM   ₹-16,976  w=0.081  state=BULL
-  2021-12-10  AURUM        ₹-15,475  w=0.081  state=BULL
-  2021-01-22  CHENNPETRO   ₹-15,411  w=0.060  state=BULL
-  2021-03-12  NFL          ₹-14,848  w=0.100  state=BULL
-  2020-03-20  YESBANK      ₹-14,307  w=0.028  state=BEAR
+  2024-03-01  MUFIN        ₹-26,564  w=0.081  state=BULL
+  2024-02-23  BGRENERGY    ₹-24,727  w=0.050  state=BULL
+  2025-05-16  PROTEAN      ₹-21,581  w=0.080  state=CHOP
+  2020-07-03  FLFL         ₹-16,142  w=0.056  state=CHOP
+  2020-02-14  AVANTIFEED   ₹-15,309  w=0.061  state=CHOP
+  2020-03-06  ASTERDM      ₹-13,906  w=0.045  state=BEAR
+  2022-01-21  TORNTPHARM   ₹-13,612  w=0.089  state=BULL
+  2024-03-01  ASKAUTOLTD   ₹-13,403  w=0.086  state=BULL
+  2024-03-01  CELLO        ₹-12,224  w=0.091  state=BULL
+  2024-02-09  CAMLINFINE   ₹-12,121  w=0.088  state=BULL

@@ -1,52 +1,53 @@
 CHIMERA FORWARD TEST REPORT
 ============================================================
-Analysis date      : 2026-05-23 12:37
+Analysis date      : 2026-06-02 10:46
 Old backtest ended : 2026-03-27
-Forward period     : 2026-04-10 -> 2026-05-15
-Forward weeks      : 5
-Forward trade rows : 125
+Forward period     : 2026-04-10 -> 2026-05-22
+Forward weeks      : 6
+Forward trade rows : 150
 
 FORWARD PERIOD PERFORMANCE
   Starting capital : ₹1,000,000
-  Ending equity    : ₹1,048,966
-  Forward return   : 4.90%
-  Volatility (ann.): 20.62%
-  Sharpe ratio     : 2.50
-  Max drawdown     : -3.89%
-  Win rate (weeks) : 60.0%
+  Ending equity    : ₹1,082,757
+  Forward return   : 8.28%
+  Volatility (ann.): 9.76%
+  Sharpe ratio     : 7.14
+  Max drawdown     : -0.20%
+  Win rate (weeks) : 83.3%
   Nifty50 return   : N/A
 
 REGIME DISTRIBUTION
-  BEAR     weeks=1 pnl=₹20,518
-  CHOP     weeks=4 pnl=₹29,147
+  BEAR     weeks=1 pnl=₹10,812
+  CHOP     weeks=5 pnl=₹69,677
 
 WEEKLY PNL BREAKDOWN
-  2026-04-10  BEAR   PnL=₹+20,518  Equity=₹1,020,518  DD=0.0%
-  2026-04-17  CHOP   PnL=₹+40,136  Equity=₹1,061,478  DD=0.0%
-  2026-04-24  CHOP   PnL=₹+28,188  Equity=₹1,091,398  DD=0.0%
-  2026-05-08  CHOP   PnL=₹-28,817  Equity=₹1,059,947  DD=-2.9%
-  2026-05-15  CHOP   PnL=₹-10,360  Equity=₹1,048,966  DD=-3.9%
+  2026-04-10  BEAR   PnL=₹+10,812  Equity=₹1,010,812  DD=0.0%
+  2026-04-17  CHOP   PnL=₹+21,303  Equity=₹1,032,345  DD=0.0%
+  2026-04-24  CHOP   PnL=₹+36,133  Equity=₹1,069,647  DD=0.0%
+  2026-05-08  CHOP   PnL=₹-1,983  Equity=₹1,067,527  DD=-0.2%
+  2026-05-15  CHOP   PnL=₹+4,382  Equity=₹1,072,204  DD=0.0%
+  2026-05-22  CHOP   PnL=₹+9,842  Equity=₹1,082,757  DD=0.0%
 
 TOP FORWARD WINNERS
-  2026-04-24  APOLLOPIPE     ₹9,678  w=0.097  CHOP
-  2026-04-24  STLTECH        ₹8,695  w=0.022  CHOP
-  2026-04-17  APEX           ₹8,332  w=0.065  CHOP
-  2026-04-24  AEROFLEX       ₹6,727  w=0.019  CHOP
-  2026-04-17  TDPOWERSYS     ₹6,586  w=0.064  CHOP
-  2026-04-17  CUPID          ₹6,389  w=0.034  CHOP
-  2026-04-24  BAJAJCON       ₹6,297  w=0.056  CHOP
-  2026-04-10  STLTECH        ₹4,780  w=0.029  BEAR
-  2026-04-17  JINDALSAW      ₹4,693  w=0.048  CHOP
-  2026-04-17  CONFIPET       ₹4,207  w=0.054  CHOP
+  2026-04-24  GKSL           ₹8,532  w=0.056  CHOP
+  2026-04-24  AMAGI          ₹8,145  w=0.053  CHOP
+  2026-04-24  SHAILY         ₹7,588  w=0.037  CHOP
+  2026-05-08  JINDRILL       ₹6,684  w=0.052  CHOP
+  2026-04-17  PARKHOSPS      ₹6,048  w=0.052  CHOP
+  2026-05-15  SHADOWFAX      ₹6,041  w=0.044  CHOP
+  2026-05-22  FRACTAL        ₹5,792  w=0.051  CHOP
+  2026-05-15  SIGMAADV       ₹5,130  w=0.040  CHOP
+  2026-05-15  VIYASH         ₹3,926  w=0.048  CHOP
+  2026-04-17  SIEMENS        ₹3,844  w=0.047  CHOP
 
 TOP FORWARD LOSERS
-  2026-05-08  GUJALKALI      ₹-8,474  w=0.079  CHOP
-  2026-04-17  PFOCUS         ₹-6,616  w=0.081  CHOP
-  2026-05-15  ENGINERSIN     ₹-6,573  w=0.050  CHOP
-  2026-05-08  PRECWIRE       ₹-6,245  w=0.096  CHOP
-  2026-04-24  STANLEY        ₹-5,881  w=-0.026  CHOP
-  2026-05-15  CONFIPET       ₹-4,881  w=0.095  CHOP
-  2026-05-08  WEBELSOLAR     ₹-4,835  w=0.070  CHOP
-  2026-04-17  MANINFRA       ₹-4,520  w=-0.033  CHOP
-  2026-05-08  GALLANTT       ₹-4,011  w=0.034  CHOP
-  2026-05-08  PRAJIND        ₹-3,841  w=0.050  CHOP
+  2026-05-15  ARIS           ₹-8,828  w=0.048  CHOP
+  2026-05-08  NACLIND        ₹-5,200  w=0.043  CHOP
+  2026-05-08  DCW            ₹-3,769  w=0.054  CHOP
+  2026-04-24  BLACKBUCK      ₹-3,749  w=0.042  CHOP
+  2026-05-22  JUBLINGREA     ₹-3,246  w=0.034  CHOP
+  2026-05-08  NOCIL          ₹-2,635  w=0.032  CHOP
+  2026-05-15  CEIGALL        ₹-2,033  w=0.031  CHOP
+  2026-05-22  RADICO         ₹-1,990  w=0.050  CHOP
+  2026-05-08  BDL            ₹-1,953  w=0.025  CHOP
+  2026-05-22  FIRSTCRY       ₹-1,733  w=0.052  CHOP

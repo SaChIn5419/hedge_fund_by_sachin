@@ -4,9 +4,9 @@ Date range         : 2019-12-06 -> 2026-05-22
 Observations       : 315 daily rows
 
 MODEL COMPARISON
-  baseline                 conf=0.950 trans_risk=0.068 changes=47   bad_days=132  bad_loss=-264.86% suppressed_bad=14  
-  probabilistic_no_news    conf=0.950 trans_risk=0.068 changes=20   bad_days=132  bad_loss=-264.86% suppressed_bad=14  
-  probabilistic_with_news  conf=0.950 trans_risk=0.068 changes=20   bad_days=132  bad_loss=-264.86% suppressed_bad=14  
+  baseline                 conf=0.950 trans_risk=0.068 changes=47   bad_days=110  bad_loss=-228.84% suppressed_bad=10  
+  probabilistic_no_news    conf=0.950 trans_risk=0.068 changes=20   bad_days=110  bad_loss=-228.84% suppressed_bad=10  
+  probabilistic_with_news  conf=0.950 trans_risk=0.068 changes=20   bad_days=110  bad_loss=-228.84% suppressed_bad=10  
 
 STATE MIX
   baseline                 bull= 56.5% chop= 30.8% bear= 12.7%
@@ -29,6 +29,6 @@ CHOP            25    72
 
 SUPPRESSION WINDOW SUMMARY
   Suppression days  : 35
-  Avg return        : 0.585%
+  Avg return        : 1.806%
   Avg transition risk: 0.196
   Avg news bias     : -0.203
