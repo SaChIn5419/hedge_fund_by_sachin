@@ -201,8 +201,8 @@ def step1_update_market_data(workers: int = 5):
 # ═══════════════════════════════════════════════════════════════════════════
 def step2_run_engine():
     log('STEP 2: Running Chimera engine simulation...')
-    from engine.signal import ChimeraEngineNormal
-    engine = ChimeraEngineNormal()
+    from engine.ml_engine import ChimeraEngineML
+    engine = ChimeraEngineML()
     engine.run_simulation()
     log('  Engine simulation complete.')
 

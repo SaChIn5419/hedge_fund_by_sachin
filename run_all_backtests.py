@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from config.paths import OUTPUT_DATA_DIR, REPO_ROOT
-from engine.signal import ChimeraEngineNormal
+from engine.ml_engine import ChimeraEngineML
 from research.experiments.backtest_report import StaticBacktestReporter
 from research.experiments.regime_validation import RegimeValidationReporter
 
@@ -30,7 +30,7 @@ def run_chimera_fip() -> str:
     print('\n' + '=' * 60)
     print('  CHIMERA FROG-IN-THE-PAN (MAIN)')
     print('=' * 60)
-    engine = ChimeraEngineNormal()
+    engine = ChimeraEngineML()
     engine.run_simulation()
     csv_path = os.path.join(PROJECT_ROOT, 'data', 'tradelog_chimera_fip.csv')
     print(f'  Trade log saved: {csv_path}')

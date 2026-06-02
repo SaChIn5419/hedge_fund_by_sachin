@@ -1,56 +1,56 @@
 CHIMERA STATIC BACKTEST REPORT
 ========================================================
-Date range         : 2019-12-06 -> 2026-05-15
+Date range         : 2019-12-06 -> 2026-05-22
 Benchmark          : ^NSEI
 
 PERFORMANCE
   Initial capital  : ₹1,000,000.00
-  Final equity     : ₹4,681,969.45
-  Total return     : 368.20%
-  CAGR             : 27.09%
+  Final equity     : ₹4,686,250.66
+  Total return     : 368.63%
+  CAGR             : 27.02%
 
 RISK
-  Volatility (ann.): 22.19%
+  Volatility (ann.): 22.15%
   Sharpe ratio     : 1.26
   Sortino ratio    : 1.94
   Max drawdown     : -28.71%
   Calmar ratio     : 0.94
-  Ulcer index      : 0.1278
+  Ulcer index      : 0.1282
   VaR 95%          : -4.65%
   CVaR 95%         : -6.43%
-  Skew / Kurtosis  : 0.22 / 1.51
+  Skew / Kurtosis  : 0.22 / 1.52
 
 ACTIVITY
-  Trade rows       : 6514
-  Active rows      : 6514
-  Active dates     : 314
-  Long rows        : 5924
-  Short rows       : 590
-  Avg gross expo   : 0.773
-  Avg net expo     : 0.704
-  Sum net PnL      : ₹1,694,489
+  Trade rows       : 6539
+  Active rows      : 6539
+  Active dates     : 315
+  Long rows        : 5944
+  Short rows       : 595
+  Avg gross expo   : 0.772
+  Avg net expo     : 0.703
+  Sum net PnL      : ₹1,695,403
 
 BENCHMARK COMPARISON
-  Benchmark return : 98.33%
-  Benchmark CAGR   : 11.22%
+  Benchmark return : 98.96%
+  Benchmark CAGR   : 11.24%
   Benchmark max DD : -34.56%
-  Excess return    : 269.87%
+  Excess return    : 269.66%
 
 REGIME BREAKDOWN
   BULL     trades=3340 pnl=₹1,523,451 avg_gross=0.052 avg_conf=0.96
-  CHOP     trades=2195 pnl=₹123,409 avg_gross=0.019 avg_conf=0.95
+  CHOP     trades=2220 pnl=₹124,324 avg_gross=0.019 avg_conf=0.95
   BEAR     trades=979  pnl=₹47,629 avg_gross=0.026 avg_conf=0.93
 
 SIDE BREAKDOWN
-  LONG  trades=5924 pnl=₹1,721,983 avg_w=0.039
-  SHORT trades=590  pnl=₹-27,494 avg_w=-0.018
+  LONG  trades=5944 pnl=₹1,723,358 avg_w=0.039
+  SHORT trades=595  pnl=₹-27,954 avg_w=-0.018
 
 TRANSITION MATRIX
 to    BEAR  BULL  CHOP
 from                  
 BEAR    34     0     9
 BULL     1   163    14
-CHOP     8    15    69
+CHOP     8    15    70
 
 BREAK DIAGNOSTICS
   Candidate break date : 2020-04-03
@@ -58,7 +58,7 @@ BREAK DIAGNOSTICS
 
 PRE / POST BREAK SPLIT
   PRE  ret=-11.27% sharpe=-2.65 sortino=-2.59 win=37.5% vol=14.24% dd=-14.37%
-  POST ret=427.68% sharpe=1.41 sortino=2.18 win=59.1% vol=22.45% dd=-28.71%
+  POST ret=428.16% sharpe=1.41 sortino=2.18 win=59.2% vol=22.41% dd=-28.71%
 
 TOP ACTIVE WINNERS
   2021-01-29  IIFL         ₹44,339  w=0.071  state=BULL

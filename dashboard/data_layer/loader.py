@@ -53,7 +53,7 @@ def compute_daily_summary(trades, capital=1_000_000):
     ).reset_index()
 
     daily['portfolio_return'] = daily['net_pnl'] / float(capital)
-    daily['equity'] = float(capital) + daily['net_pnl'].cumsum()
+    daily['equity'] = float(capital) * (1.0 + daily['portfolio_return']).cumprod()
     daily['peak'] = daily['equity'].cummax()
     daily['drawdown'] = daily['equity'] / daily['peak'] - 1.0
     daily['market_state'] = grouped['market_state'].agg(lambda x: x.mode().iat[0] if not x.mode().empty else x.iloc[0]).values

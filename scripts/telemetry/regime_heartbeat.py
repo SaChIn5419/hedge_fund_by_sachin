@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from config.paths import REGIME_TRACE_PATH
-from engine.signal import ChimeraEngineNormal
+from engine.ml_engine import ChimeraEngineML
 
 
 def generate_regime_heartbeat():

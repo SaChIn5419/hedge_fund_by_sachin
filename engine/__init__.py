@@ -1,6 +1,6 @@
 """Execution and signal engine package for Chimera."""
 
-from .signal import ChimeraEngineNormal
+from .ml_engine import ChimeraEngineML
 
-__all__ = ["ChimeraEngineNormal"]
+__all__ = ["ChimeraEngineML"]
 
