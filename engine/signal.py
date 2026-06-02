@@ -41,9 +41,9 @@ CONFIG = {
     # ── v2 PRODUCTION DEFAULTS (validated 2026-05-23) ──
     # v1 originals (safe fallback): LONG_GROSS_CHOP=0.70, SHORT_GROSS_CHOP=0.10
     'LONG_GROSS_CHOP': 0.30,
-    'SHORT_GROSS_CHOP': 0.05,
+    'SHORT_GROSS_CHOP': 0.00,
     'LONG_GROSS_BEAR': 0.40,
-    'SHORT_GROSS_BEAR': 0.50,
+    'SHORT_GROSS_BEAR': 0.00,
     # Breadth calibrated for 2200+ stock universe (avg ~0.43, healthy bull ~0.55+)
     'BREADTH_BULL': 0.40,
     'BREADTH_BEAR': 0.25,
@@ -695,6 +695,11 @@ class ChimeraEngineNormal:
                 })
                 continue
 
+            self.current_macro_state = {
+                'regime_confidence': confidence, 'p_bull': p_bull, 'p_chop': p_chop, 'p_bear': p_bear,
+                'transition_risk': transition_risk, 'breadth': breadth, 'vix': vix, 'macro_score': macro_score,
+                'news_bias': news_bias, 'suppression_score': suppression_score
+            }
             long_budget, short_budget = self._allocate_gross_budget(regime, len(top_longs), len(top_shorts), confidence)
             # Threshold-based scaling (v2 original — proven in walk-forward):
             # Continuous scaling (max(0.30, 1.0 - transition_risk)) was REJECTED:
