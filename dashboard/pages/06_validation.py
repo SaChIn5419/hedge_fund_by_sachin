@@ -61,9 +61,10 @@ layout = html.Div(
         ),
         html.Div(
             [
-                html.H4("Validation Stats"),
-                html.P("In-Sample Sharpe: 1.24 | Out-Of-Sample Sharpe: 3.57 (April - May 2026 Walk Forward)", style={"color": "#00FF88", "fontWeight": "bold", "fontFamily": "JetBrains Mono"}),
-                html.P("Max Drawdown during OOS period: -2.88%", style={"color": "#FF4560", "fontFamily": "JetBrains Mono"})
+                html.H4("Validation Stats (Dec 2019 - May 2026)"),
+                html.P("Sharpe Ratio: 1.26 | Sortino Ratio: 1.94", style={"color": "#00FF88", "fontWeight": "bold", "fontFamily": "JetBrains Mono"}),
+                html.P("Max Drawdown: -28.71% | CAGR: 27.09%", style={"color": "#FF4560", "fontFamily": "JetBrains Mono"}),
+                html.P("Out-Of-Sample Sharpe: 3.57 (April - May 2026 Walk Forward)", style={"color": "#00B4D8", "fontWeight": "bold", "fontFamily": "JetBrains Mono"})
             ],
             className="card",
             style={"marginTop": "20px"}

@@ -1,85 +1,85 @@
 CHIMERA STATIC BACKTEST REPORT
 ========================================================
-Date range         : 2019-12-06 -> 2026-05-08
+Date range         : 2019-12-06 -> 2026-05-15
 Benchmark          : ^NSEI
 
 PERFORMANCE
   Initial capital  : ₹1,000,000.00
-  Final equity     : ₹5,465,708.39
-  Total return     : 446.57%
-  CAGR             : 30.28%
+  Final equity     : ₹4,681,969.45
+  Total return     : 368.20%
+  CAGR             : 27.09%
 
 RISK
-  Volatility (ann.): 24.21%
-  Sharpe ratio     : 1.29
-  Sortino ratio    : 2.10
-  Max drawdown     : -35.14%
-  Calmar ratio     : 0.86
-  Ulcer index      : 0.1307
-  VaR 95%          : -5.30%
-  CVaR 95%         : -6.63%
-  Skew / Kurtosis  : 0.13 / 0.72
+  Volatility (ann.): 22.19%
+  Sharpe ratio     : 1.26
+  Sortino ratio    : 1.94
+  Max drawdown     : -28.71%
+  Calmar ratio     : 0.94
+  Ulcer index      : 0.1278
+  VaR 95%          : -4.65%
+  CVaR 95%         : -6.43%
+  Skew / Kurtosis  : 0.22 / 1.51
 
 ACTIVITY
-  Trade rows       : 6489
-  Active rows      : 6489
-  Active dates     : 313
-  Long rows        : 5904
-  Short rows       : 585
-  Avg gross expo   : 0.923
-  Avg net expo     : 0.824
-  Sum net PnL      : ₹1,877,662
+  Trade rows       : 6514
+  Active rows      : 6514
+  Active dates     : 314
+  Long rows        : 5924
+  Short rows       : 590
+  Avg gross expo   : 0.773
+  Avg net expo     : 0.704
+  Sum net PnL      : ₹1,694,489
 
 BENCHMARK COMPARISON
-  Benchmark return : 102.79%
-  Benchmark CAGR   : 11.64%
+  Benchmark return : 98.33%
+  Benchmark CAGR   : 11.22%
   Benchmark max DD : -34.56%
-  Excess return    : 343.78%
+  Excess return    : 269.87%
 
 REGIME BREAKDOWN
   BULL     trades=3340 pnl=₹1,523,451 avg_gross=0.052 avg_conf=0.96
-  CHOP     trades=2170 pnl=₹306,582 avg_gross=0.041 avg_conf=0.96
+  CHOP     trades=2195 pnl=₹123,409 avg_gross=0.019 avg_conf=0.95
   BEAR     trades=979  pnl=₹47,629 avg_gross=0.026 avg_conf=0.93
 
 SIDE BREAKDOWN
-  LONG  trades=5904 pnl=₹1,904,710 avg_w=0.046
-  SHORT trades=585  pnl=₹-27,048 avg_w=-0.026
+  LONG  trades=5924 pnl=₹1,721,983 avg_w=0.039
+  SHORT trades=590  pnl=₹-27,494 avg_w=-0.018
 
 TRANSITION MATRIX
 to    BEAR  BULL  CHOP
 from                  
 BEAR    34     0     9
 BULL     1   163    14
-CHOP     8    15    68
+CHOP     8    15    69
 
 BREAK DIAGNOSTICS
   Candidate break date : 2020-04-03
-  Break score          : 0.4130
+  Break score          : 0.4117
 
 PRE / POST BREAK SPLIT
-  PRE  ret=-12.13% sharpe=-2.25 sortino=-2.48 win=37.5% vol=17.89% dd=-17.35%
-  POST ret=522.01% sharpe=1.44 sortino=2.37 win=59.3% vol=24.41% dd=-35.14%
+  PRE  ret=-11.27% sharpe=-2.65 sortino=-2.59 win=37.5% vol=14.24% dd=-14.37%
+  POST ret=427.68% sharpe=1.41 sortino=2.18 win=59.1% vol=22.45% dd=-28.71%
 
 TOP ACTIVE WINNERS
   2021-01-29  IIFL         ₹44,339  w=0.071  state=BULL
   2021-05-28  THEMISMED    ₹33,963  w=0.065  state=BULL
-  2022-06-03  MRPL         ₹30,827  w=0.070  state=CHOP
-  2020-09-25  RAMCOSYS     ₹30,695  w=0.100  state=CHOP
   2020-11-13  ATGL         ₹30,462  w=0.080  state=BULL
   2021-12-03  BCG          ₹29,576  w=0.084  state=BULL
   2023-06-02  IZMO         ₹28,172  w=0.078  state=BULL
   2021-02-26  SCI          ₹25,916  w=0.082  state=BULL
   2021-10-29  ADSL         ₹25,454  w=0.055  state=BULL
   2024-08-30  REFEX        ₹25,192  w=0.080  state=BULL
+  2021-02-05  HEMIPROP     ₹24,993  w=0.082  state=BULL
+  2023-08-04  ZENTEC       ₹24,771  w=0.069  state=BULL
 
 TOP ACTIVE LOSERS
-  2020-07-03  ALOKINDS     ₹-29,744  w=0.100  state=CHOP
+  2020-07-03  ALOKINDS     ₹-29,581  w=0.099  state=CHOP
   2024-11-01  MAANALU      ₹-27,875  w=0.080  state=BULL
-  2025-06-27  SIGACHI      ₹-20,786  w=0.082  state=CHOP
   2022-11-04  KSHITIJPOL   ₹-18,351  w=0.100  state=BULL
   2022-09-16  NDTV         ₹-18,087  w=0.100  state=BULL
   2024-03-01  SWELECTES    ₹-17,500  w=0.071  state=BULL
   2021-11-12  MANAPPURAM   ₹-16,976  w=0.081  state=BULL
-  2026-02-27  RNBDENIMS    ₹-16,657  w=0.090  state=CHOP
   2021-12-10  AURUM        ₹-15,475  w=0.081  state=BULL
   2021-01-22  CHENNPETRO   ₹-15,411  w=0.060  state=BULL
+  2021-03-12  NFL          ₹-14,848  w=0.100  state=BULL
+  2020-03-20  YESBANK      ₹-14,307  w=0.028  state=BEAR

@@ -1,5 +1,5 @@
 import dash
-from dash import html, dcc
+from dash import html, dcc, Input, Output, callback
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
@@ -112,32 +112,15 @@ layout = html.Div(
                 html.Div(dcc.Graph(figure=create_monthly_heatmap(daily)), className="card", style={"flex": 2}),
                 html.Div(
                     [
-                        html.Div(
-                            [
-                                html.H4("System Alerts", style={"marginBottom": "15px", "color": "#E6EDF3"}),
-                                html.Div(
-                                    [
-                                        html.Div("⚠️ High Drawdown Warning" if (daily['drawdown'].iloc[-1] < -0.1) else "✅ Drawdown Risk Contained", style={"padding": "10px", "backgroundColor": "rgba(255, 69, 96, 0.1)" if (daily['drawdown'].iloc[-1] < -0.1) else "rgba(0, 255, 136, 0.1)", "borderLeft": "4px solid #FF4560" if (daily['drawdown'].iloc[-1] < -0.1) else "4px solid #00FF88", "marginBottom": "10px"}),
-                                        html.Div(f"ℹ️ Current Regime: {daily['market_state'].iloc[-1]}", style={"padding": "10px", "backgroundColor": "rgba(255, 193, 7, 0.1)", "borderLeft": "4px solid #FFC107", "marginBottom": "10px"}),
-                                        html.Div("✅ FIP factor signals active", style={"padding": "10px", "backgroundColor": "rgba(0, 255, 136, 0.1)", "borderLeft": "4px solid #00FF88"})
-                                    ] if not daily.empty else [html.P("No data available")],
-                                    style={"display": "flex", "flexDirection": "column", "gap": "5px"}
-                                )
-                            ],
-                            className="card",
-                            style={"marginBottom": "20px", "flex": 1}
-                        ),
-                        html.Div(
-                            [
-                                html.H4("Export Tools"),
-                                html.Button("Download Tearsheet (CSV)", id="btn-tearsheet", className="kpi-title", style={"width": "100%", "padding": "15px", "backgroundColor": "#161B22", "color": "#E6EDF3", "border": "1px solid #30363D", "borderRadius": "4px", "cursor": "pointer", "marginTop": "10px"}),
-                                dcc.Download(id="download-dataframe-csv")
-                            ],
-                            className="card",
-                            style={"flex": 1}
-                        )
+                        html.H4("System Alerts"),
+                        html.Ul([
+                            html.Li(f"Current Drawdown: {kpis.get('Max DD', 'N/A')}"),
+                            html.Li("System running nominally."),
+                        ]),
+                        html.Button("Export Tearsheet (CSV)", id="btn-export-tearsheet", className="btn btn-primary mt-3", style={"backgroundColor": "#00B4D8", "color": "#000", "border": "none", "padding": "10px 15px", "cursor": "pointer"}),
+                        dcc.Download(id="download-tearsheet")
                     ],
-                    style={"display": "flex", "flexDirection": "column", "flex": 1}
+                    className="card", style={"flex": 1}
                 )
             ],
             style={"display": "flex", "gap": "20px"}
@@ -145,13 +128,13 @@ layout = html.Div(
     ]
 )
 
-@dash.callback(
-    dash.Output("download-dataframe-csv", "data"),
-    dash.Input("btn-tearsheet", "n_clicks"),
+@callback(
+    Output("download-tearsheet", "data"),
+    Input("btn-export-tearsheet", "n_clicks"),
     prevent_initial_call=True
 )
 def generate_tearsheet(n_clicks):
-    if n_clicks:
-        # For simplicity, we just dump the daily KPIs trace as the tearsheet data
-        return dcc.send_data_frame(daily.to_csv, "chimera_tearsheet.csv")
-    return dash.no_update
+    # Generates a quick export of daily returns and equity for the tearsheet
+    export_df = daily[['date', 'portfolio_return', 'equity', 'market_state']].copy()
+    export_df['date'] = export_df['date'].dt.strftime('%Y-%m-%d')
+    return dcc.send_data_frame(export_df.to_csv, "chimera_tearsheet.csv", index=False)

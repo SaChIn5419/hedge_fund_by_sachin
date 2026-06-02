@@ -2,15 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
-# Use absolute paths or search relative to root
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-def get_data_path(filename):
-    return os.path.join(PROJECT_ROOT, "data", filename)
-
-def load_trade_log(filepath=None):
-    if filepath is None:
-        filepath = get_data_path("tradelog_chimera_fip.csv")
+def load_trade_log(filepath="data/tradelog_chimera_fip.csv"):
     if not os.path.exists(filepath):
         return pd.DataFrame()
     df = pd.read_csv(filepath)
@@ -25,9 +17,7 @@ def load_trade_log(filepath=None):
                 df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
-def load_weekly_returns(filepath=None):
-    if filepath is None:
-        filepath = get_data_path("weekly_returns_chimera_fip.csv")
+def load_weekly_returns(filepath="data/weekly_returns_chimera_fip.csv"):
     if not os.path.exists(filepath):
         return pd.DataFrame()
     df = pd.read_csv(filepath)
@@ -35,9 +25,7 @@ def load_weekly_returns(filepath=None):
         df['date'] = pd.to_datetime(df['date'])
     return df
 
-def load_regime_trace(filepath=None):
-    if filepath is None:
-        filepath = get_data_path("regime_trace_chimera_fip.csv")
+def load_regime_trace(filepath="data/regime_trace_chimera_fip.csv"):
     if not os.path.exists(filepath):
         return pd.DataFrame()
     df = pd.read_csv(filepath)

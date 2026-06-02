@@ -180,6 +180,10 @@ def _split_pre_post(daily: pd.DataFrame, split_date: Optional[pd.Timestamp]) -> 
 class ReportOutputs:
     png_path: str
     txt_path: str
+    equity_path: str
+    rolling_path: str
+    drawdown_path: str
+    regime_path: str
 
 
 class StaticBacktestReporter:
@@ -478,6 +482,149 @@ class StaticBacktestReporter:
             for _, r in active.iterrows():
                 f.write(f"  {pd.to_datetime(r['date']).date()}  {r['ticker']:<12} ₹{r['net_pnl']:,.0f}  w={r['weight']:.3f}  state={r.get('market_state', 'N/A')}\n")
 
+    def _make_equity_plot(self, daily: pd.DataFrame, bench: Optional[pd.Series], regime_trace: Optional[pd.DataFrame], break_date: Optional[pd.Timestamp], filename: str):
+        fig, ax = plt.subplots(figsize=(12, 6.5), constrained_layout=True)
+        x = pd.to_datetime(daily['date'])
+
+        # Shading
+        if regime_trace is not None and not regime_trace.empty:
+            reg = regime_trace.copy()
+            reg['date'] = pd.to_datetime(reg['date'])
+            reg = reg.sort_values('date').dropna(subset=['regime'])
+            starts = reg['date'].tolist()
+            states = reg['regime'].astype(str).tolist()
+            for i, start in enumerate(starts):
+                end = starts[i + 1] if i + 1 < len(starts) else x.iloc[-1]
+                color = REGIME_COLORS.get(states[i], '#999999')
+                ax.axvspan(start, end, color=color, alpha=0.08)
+
+        ax.plot(x, daily['equity'], label='Chimera Strategy', linewidth=2.2, color='#1f77b4')
+        if bench is not None and not bench.empty:
+            bench = bench.reindex(x).ffill().dropna()
+            if not bench.empty:
+                bench_eq = bench * (self.capital / float(bench.iloc[0]))
+                ax.plot(bench_eq.index, bench_eq.values, label=f'Benchmark ({self.benchmark_ticker})', linestyle='--', linewidth=1.8, color='#d62728')
+        ax.set_yscale('log')
+        ax.set_title('Chimera Equity Curve & Benchmark (Log Scale with Regime Shading)', fontsize=13, fontweight='bold')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Portfolio Value (₹)')
+        ax.grid(alpha=0.25)
+
+        if break_date is not None:
+            ax.axvline(break_date, color='purple', linestyle=':', linewidth=2.2)
+            ax.text(break_date, ax.get_ylim()[1] * 0.9, ' Structural Break', color='purple', fontsize=10, va='top')
+
+        regime_handles = [Patch(facecolor=c, alpha=0.25, label=f'{k} Regime') for k, c in REGIME_COLORS.items()]
+        ax.legend(handles=ax.get_legend_handles_labels()[0] + regime_handles, labels=ax.get_legend_handles_labels()[1] + [p.get_label() for p in regime_handles], loc='upper left', fontsize=9.5)
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+        fig.savefig(filename, dpi=180, bbox_inches='tight')
+        plt.close(fig)
+
+    def _make_rolling_plot(self, daily: pd.DataFrame, bench: Optional[pd.Series], filename: str):
+        fig, ax = plt.subplots(figsize=(12, 6.0), constrained_layout=True)
+        x = pd.to_datetime(daily['date'])
+
+        # Calculate Rolling Sharpe & Beta
+        if bench is not None and not bench.empty:
+            bench = bench.reindex(x).ffill().dropna()
+            if not bench.empty:
+                bench_ret = bench.pct_change().fillna(0.0)
+                strat_ret = daily.set_index(pd.to_datetime(daily['date']))['portfolio_return'].reindex(bench_ret.index).fillna(0.0)
+                rolling = 26 if len(daily) > 60 else max(5, len(daily) // 4)
+                cov_sb = strat_ret.rolling(rolling, min_periods=max(6, rolling // 2)).cov(bench_ret)
+                var_b = bench_ret.rolling(rolling, min_periods=max(6, rolling // 2)).var()
+                beta = (cov_sb / var_b.replace(0, np.nan)).dropna()
+                roll_sharpe = (
+                    strat_ret.rolling(rolling, min_periods=max(6, rolling // 2)).mean()
+                    / strat_ret.rolling(rolling, min_periods=max(6, rolling // 2)).std().replace(0, np.nan)
+                    * np.sqrt(52)
+                ).dropna()
+
+                ax.plot(beta.index, beta.values, label='Rolling Beta (NSE/Benchmark Sensitivity)', linewidth=1.8, color='#1f77b4')
+                ax.plot(roll_sharpe.index, roll_sharpe.values, label='Rolling Sharpe Ratio (Annualised)', linewidth=1.8, color='#ff7f0e')
+                ax.axhline(0, color='black', linewidth=1.0, alpha=0.6)
+                ax.axhline(1, color='grey', linewidth=0.8, alpha=0.4, linestyle='--')
+                ax.set_title('Rolling Portfolio Metrics (Sensitivity & Efficiency)', fontsize=13, fontweight='bold')
+                ax.set_xlabel('Date')
+                ax.legend(loc='upper left', fontsize=10)
+                ax.grid(alpha=0.25)
+                ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+        fig.savefig(filename, dpi=180, bbox_inches='tight')
+        plt.close(fig)
+
+    def _make_drawdown_plot(self, daily: pd.DataFrame, bench: Optional[pd.Series], filename: str):
+        fig, ax = plt.subplots(figsize=(12, 5.5), constrained_layout=True)
+        x = pd.to_datetime(daily['date'])
+
+        ax.fill_between(x, daily['drawdown'] * 100, 0, color='#d62728', alpha=0.3, label='Strategy Drawdown')
+        ax.plot(x, daily['drawdown'] * 100, color='#d62728', linewidth=1.5)
+
+        if bench is not None and not bench.empty:
+            bench = bench.reindex(x).ffill().dropna()
+            if not bench.empty:
+                bench_eq = bench * (self.capital / float(bench.iloc[0]))
+                bench_dd = (bench_eq / bench_eq.cummax() - 1.0) * 100
+                ax.plot(bench_dd.index, bench_dd.values, linestyle='--', color='#7f7f7f', label=f'Benchmark ({self.benchmark_ticker}) Drawdown', linewidth=1.5)
+
+        ax.axhline(0, color='black', linewidth=1.0, alpha=0.6)
+        ax.set_title('Strategy Peak-to-Trough Drawdown Analysis', fontsize=13, fontweight='bold')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Drawdown (%)')
+        ax.legend(loc='lower left', fontsize=10)
+        ax.grid(alpha=0.25)
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+        fig.savefig(filename, dpi=180, bbox_inches='tight')
+        plt.close(fig)
+
+    def _make_regime_plot(self, daily: pd.DataFrame, filename: str):
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(14, 12), sharex=True, constrained_layout=True)
+        x = pd.to_datetime(daily['date'])
+
+        # Panel 1: Probabilities
+        if 'p_bull' in daily.columns:
+            ax1.plot(x, daily['p_bull'], label='P(Bull) - Up Trend Strength', color='#2ca02c', linewidth=2.0)
+        if 'p_bear' in daily.columns:
+            ax1.plot(x, daily['p_bear'], label='P(Bear) - Down Trend Strength', color='#d62728', linewidth=2.0)
+        if 'p_chop' in daily.columns:
+            ax1.plot(x, daily['p_chop'], label='P(Chop) - Whipsaw/Range', color='#ff7f0e', linewidth=1.5, linestyle=':')
+        ax1.set_title('Panel A: Underlying Regime Probability States', fontsize=12, fontweight='bold')
+        ax1.set_ylabel('Probability')
+        ax1.set_ylim(-0.05, 1.05)
+        ax1.legend(loc='upper left', fontsize=9.5)
+        ax1.grid(alpha=0.25)
+
+        # Panel 2: Confidence and Transition Risk
+        ax2.plot(x, daily['regime_confidence'], label='Regime Decision Confidence', color='#1f77b4', linewidth=2.0)
+        if 'transition_risk' in daily.columns:
+            ax2.plot(x, daily['transition_risk'], label='Transition Risk (Vulnerability)', color='#9467bd', linewidth=1.8, linestyle='--')
+        ax2.set_title('Panel B: State Stability & Transition Vulnerability', fontsize=12, fontweight='bold')
+        ax2.set_ylabel('Score')
+        ax2.set_ylim(-0.05, 1.05)
+        ax2.legend(loc='upper left', fontsize=9.5)
+        ax2.grid(alpha=0.25)
+
+        # Panel 3: Technical / Sentiment Drivers
+        if 'breadth' in daily.columns:
+            ax3.plot(x, daily['breadth'], label='Market Breadth (Volume Rank)', color='#000080', linewidth=1.5)
+        if 'macro_score' in daily.columns:
+            ax3.plot(x, daily['macro_score'], label='Macro Driver Score', color='#e377c2', linewidth=1.5)
+        if 'news_bias' in daily.columns:
+            ax3.plot(x, daily['news_bias'], label='Lightweight News Sentiment Bias', color='#17becf', linewidth=1.5)
+        ax3.set_title('Panel C: Technical, Macro, & News Sentiment Drivers', fontsize=12, fontweight='bold')
+        ax3.set_ylabel('Normalized Score')
+        ax3.legend(loc='upper left', fontsize=9.5)
+        ax3.grid(alpha=0.25)
+
+        # Format dates on last axis
+        ax3.xaxis.set_major_locator(mdates.AutoDateLocator())
+        ax3.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+        fig.suptitle('Chimera Regime Analysis Dashboard', fontsize=15, fontweight='bold', y=1.02)
+        fig.savefig(filename, dpi=180, bbox_inches='tight')
+        plt.close(fig)
+
     def generate(self, csv_path: str, output_prefix: str, open_browser: bool = False) -> ReportOutputs:
         trades = self._load_trade_log(csv_path)
         daily = self._daily_summary(trades)
@@ -495,6 +642,25 @@ class StaticBacktestReporter:
 
         out_png = f'{output_prefix}.png'
         out_txt = f'{output_prefix}.txt'
+        out_eq = f'{output_prefix}_equity.png'
+        out_roll = f'{output_prefix}_rolling_metrics.png'
+        out_dd = f'{output_prefix}_drawdown.png'
+        out_reg = f'{output_prefix}_regime_analysis.png'
+
         self._make_plot(daily, bench, regime_trace, break_date, out_png)
         self._write_txt(daily, trades, bench, regime_trace, out_txt, break_date, break_score)
-        return ReportOutputs(png_path=out_png, txt_path=out_txt)
+
+        # Generate separate clean reports
+        self._make_equity_plot(daily, bench, regime_trace, break_date, out_eq)
+        self._make_rolling_plot(daily, bench, out_roll)
+        self._make_drawdown_plot(daily, bench, out_dd)
+        self._make_regime_plot(daily, out_reg)
+
+        return ReportOutputs(
+            png_path=out_png,
+            txt_path=out_txt,
+            equity_path=out_eq,
+            rolling_path=out_roll,
+            drawdown_path=out_dd,
+            regime_path=out_reg
+        )

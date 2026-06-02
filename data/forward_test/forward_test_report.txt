@@ -1,30 +1,31 @@
 CHIMERA FORWARD TEST REPORT
 ============================================================
-Analysis date      : 2026-05-15 10:40
+Analysis date      : 2026-05-23 12:37
 Old backtest ended : 2026-03-27
-Forward period     : 2026-04-10 -> 2026-05-08
-Forward weeks      : 4
-Forward trade rows : 100
+Forward period     : 2026-04-10 -> 2026-05-15
+Forward weeks      : 5
+Forward trade rows : 125
 
 FORWARD PERIOD PERFORMANCE
   Starting capital : ₹1,000,000
-  Ending equity    : ₹1,059,947
-  Forward return   : 5.99%
-  Volatility (ann.): 21.86%
-  Sharpe ratio     : 3.57
-  Max drawdown     : -2.88%
-  Win rate (weeks) : 75.0%
+  Ending equity    : ₹1,048,966
+  Forward return   : 4.90%
+  Volatility (ann.): 20.62%
+  Sharpe ratio     : 2.50
+  Max drawdown     : -3.89%
+  Win rate (weeks) : 60.0%
   Nifty50 return   : N/A
 
 REGIME DISTRIBUTION
   BEAR     weeks=1 pnl=₹20,518
-  CHOP     weeks=3 pnl=₹39,507
+  CHOP     weeks=4 pnl=₹29,147
 
 WEEKLY PNL BREAKDOWN
   2026-04-10  BEAR   PnL=₹+20,518  Equity=₹1,020,518  DD=0.0%
   2026-04-17  CHOP   PnL=₹+40,136  Equity=₹1,061,478  DD=0.0%
   2026-04-24  CHOP   PnL=₹+28,188  Equity=₹1,091,398  DD=0.0%
   2026-05-08  CHOP   PnL=₹-28,817  Equity=₹1,059,947  DD=-2.9%
+  2026-05-15  CHOP   PnL=₹-10,360  Equity=₹1,048,966  DD=-3.9%
 
 TOP FORWARD WINNERS
   2026-04-24  APOLLOPIPE     ₹9,678  w=0.097  CHOP
@@ -41,11 +42,11 @@ TOP FORWARD WINNERS
 TOP FORWARD LOSERS
   2026-05-08  GUJALKALI      ₹-8,474  w=0.079  CHOP
   2026-04-17  PFOCUS         ₹-6,616  w=0.081  CHOP
+  2026-05-15  ENGINERSIN     ₹-6,573  w=0.050  CHOP
   2026-05-08  PRECWIRE       ₹-6,245  w=0.096  CHOP
   2026-04-24  STANLEY        ₹-5,881  w=-0.026  CHOP
+  2026-05-15  CONFIPET       ₹-4,881  w=0.095  CHOP
   2026-05-08  WEBELSOLAR     ₹-4,835  w=0.070  CHOP
   2026-04-17  MANINFRA       ₹-4,520  w=-0.033  CHOP
   2026-05-08  GALLANTT       ₹-4,011  w=0.034  CHOP
   2026-05-08  PRAJIND        ₹-3,841  w=0.050  CHOP
-  2026-05-08  REGAAL         ₹-3,585  w=0.035  CHOP
-  2026-04-24  CONFIPET       ₹-3,380  w=0.097  CHOP

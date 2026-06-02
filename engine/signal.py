@@ -38,8 +38,10 @@ CONFIG = {
     'SHORT_NAMES': 5,
     'LONG_GROSS_BULL': 1.00,
     'SHORT_GROSS_BULL': 0.00,
-    'LONG_GROSS_CHOP': 0.70,
-    'SHORT_GROSS_CHOP': 0.10,
+    # ── v2 PRODUCTION DEFAULTS (validated 2026-05-23) ──
+    # v1 originals (safe fallback): LONG_GROSS_CHOP=0.70, SHORT_GROSS_CHOP=0.10
+    'LONG_GROSS_CHOP': 0.30,
+    'SHORT_GROSS_CHOP': 0.05,
     'LONG_GROSS_BEAR': 0.40,
     'SHORT_GROSS_BEAR': 0.50,
     # Breadth calibrated for 2200+ stock universe (avg ~0.43, healthy bull ~0.55+)
@@ -225,6 +227,8 @@ class ChimeraEngineNormal:
                     loaded_any = True
             except Exception as exc:
                 print(f'Error loading news context: {exc}')
+
+
 
         if not loaded_any:
             return None
@@ -587,7 +591,21 @@ class ChimeraEngineNormal:
 
         asset_lookup = {a.ticker: a for a in asset_cache}
 
-        for rebalance_idx in range(start_rebalance_idx, len(rebalance_dates) - 1):
+        # Time-fencing for fast validation on weak laptops:
+        test_start = os.environ.get('CHIMERA_TEST_START')
+        test_end = os.environ.get('CHIMERA_TEST_END')
+        if test_start:
+            test_start_dt = pd.to_datetime(test_start)
+            start_rebalance_idx = max(start_rebalance_idx, int(np.searchsorted(rebalance_dates, test_start_dt, side='left')))
+            print(f'Test start overridden: {test_start}')
+
+        end_rebalance_idx = len(rebalance_dates) - 1
+        if test_end:
+            test_end_dt = pd.to_datetime(test_end)
+            end_rebalance_idx = min(end_rebalance_idx, int(np.searchsorted(rebalance_dates, test_end_dt, side='left')))
+            print(f'Test end overridden: {test_end}')
+
+        for rebalance_idx in range(start_rebalance_idx, end_rebalance_idx):
             current_date = rebalance_dates[rebalance_idx]
             next_date = rebalance_dates[rebalance_idx + 1]
             current_idx = int(dates.get_loc(current_date))
@@ -678,6 +696,9 @@ class ChimeraEngineNormal:
                 continue
 
             long_budget, short_budget = self._allocate_gross_budget(regime, len(top_longs), len(top_shorts), confidence)
+            # Threshold-based scaling (v2 original — proven in walk-forward):
+            # Continuous scaling (max(0.30, 1.0 - transition_risk)) was REJECTED:
+            # it silently cut 20-40% of BULL exposure, costing ~89% total return.
             if transition_risk >= 0.60:
                 long_budget *= max(0.40, 1.0 - 0.60 * transition_risk)
                 short_budget *= max(0.25, 1.0 - 0.80 * transition_risk)

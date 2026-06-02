@@ -38,24 +38,6 @@ Chimera is a market-neutral dispersion engine designed to exploit cross-sectiona
 - Handles interruptions gracefully (battery, network) — re-run and it picks up where it left off.
 - Flags: `--data-only`, `--skip-data-update`, `--skip-reports`, `--cutoff-date`
 
-### 🖥️ Quant Desk Dashboard
-An institutional-grade, multi-page web dashboard built with **Dash by Plotly**.
-Features a dark-terminal aesthetic (Bloomberg style) with live tracking of:
-- Executive Summary (KPIs and Regime-shaded Equity Curves)
-- Regime Monitor (Timeline and Regime Conditional Performance)
-- Portfolio Book (Live Holdings)
-
-#### Running the Dashboard
-1. Ensure your environment has the required UI dependencies installed:
-   ```bash
-   pip install dash dash-bootstrap-components plotly pandas
-   ```
-2. Start the dashboard server:
-   ```bash
-   python dashboard/app.py
-   ```
-3. Open your browser and navigate to: `http://127.0.0.1:8050/`
-
 ---
 
 ## 📈 Visual Report
@@ -66,11 +48,6 @@ Features a dark-terminal aesthetic (Bloomberg style) with live tracking of:
 
 ```text
 chimera/
-├── dashboard/                # Dash UI application
-│   ├── app.py                # Main server entry point
-│   ├── pages/                # Individual dashboard tabs
-│   ├── data_layer/           # Loaders for engine outputs
-│   └── assets/               # Dark mode CSS theme
 ├── config/
 │   └── paths.py
 ├── data/
@@ -103,5 +80,16 @@ chimera/
 - `config/paths.py`: Centralized repo and data path configuration.
 - `scripts/telemetry/`: Daily automated pipeline and systemd service for production telemetry.
 - `chimera_engine.py` and `chimera_backtest_report.py`: Compatibility wrappers for older imports.
+
+## 🖥️ Interactive Dashboard
+
+To start the local Dash visualization interface:
+
+```bash
+pip install dash dash-bootstrap-components plotly pandas numpy
+python dashboard/app.py
+```
+
+Then visit `http://127.0.0.1:8050` to view the comprehensive risk analytics, alpha lab, regime monitor, and validation tearsheets.
 
 > **Note**: Raw market data lives in `chimera_data/` by default and is excluded from version control for size and license reasons. Generated reports and derived artifacts live under `data/`.

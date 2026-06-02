@@ -12,7 +12,7 @@ daily = compute_daily_summary(trades)
 current_regime = daily['market_state'].iloc[-1] if not daily.empty else "UNKNOWN"
 last_update = daily['date'].iloc[-1].strftime('%Y-%m-%d') if not daily.empty else "N/A"
 
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.DARKLY, dbc.icons.BOOTSTRAP])
+app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.DARKLY])
 app.title = "Chimera Quant Desk"
 
 sidebar = html.Div(
@@ -77,4 +77,4 @@ app.layout = html.Div(
 )
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8050)
+    app.run_server(debug=True, port=8050)
