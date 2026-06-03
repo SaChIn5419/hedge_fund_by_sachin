@@ -47,6 +47,7 @@ CONFIG = {
     # Breadth calibrated for 2200+ stock universe (avg ~0.43, healthy bull ~0.55+)
     'BREADTH_BULL': 0.40,
     'BREADTH_BEAR': 0.25,
+    'FRICTION_BPS': 15,
     'VIX_LOW': 18.0,
     'VIX_HIGH': 28.0,
     'BROAD_TICKER_CANDIDATES': ['nifty50', '^NSEI', 'nifty_50'],
@@ -561,6 +562,7 @@ class ChimeraEngineNormal:
         self.weekly_returns = []
         self.regime_trace = []
         self.prev_regime_probs = None
+        self.previous_weights = {}
 
         data_map = self.load_all_stocks()
         data_map = self.load_indices(data_map)
@@ -755,6 +757,17 @@ class ChimeraEngineNormal:
                     item['weight'] *= scale
 
             date_pnl = 0.0
+            total_turnover = 0.0
+            
+            # Compute friction for trades (Delta in weights)
+            for ticker in set(self.previous_weights.keys()).union(final_weights.keys()):
+                old_w = self.previous_weights.get(ticker, 0.0)
+                new_w = final_weights[ticker]['weight'] if ticker in final_weights else 0.0
+                total_turnover += abs(new_w - old_w)
+                
+            friction_cost = total_turnover * CONFIG['CAPITAL'] * (CONFIG['FRICTION_BPS'] / 10000.0)
+            date_pnl -= friction_cost
+
             for ticker, item in final_weights.items():
                 asset = asset_lookup[ticker]
                 entry_open = asset.open[current_idx] if current_idx < len(asset.open) else np.nan
@@ -807,7 +820,7 @@ class ChimeraEngineNormal:
 
             self.weekly_returns.append({
                 'date': current_date,
-                'market_state': regime,
+                'regime': regime,
                 'regime_confidence': confidence,
                 'p_bull': p_bull,
                 'p_chop': p_chop,
@@ -821,7 +834,12 @@ class ChimeraEngineNormal:
                 'portfolio_return': date_pnl / CONFIG['CAPITAL'],
                 'gross_exposure': float(sum(abs(v['weight']) for v in final_weights.values())),
                 'net_exposure': float(sum(v['weight'] for v in final_weights.values())),
+                'friction_cost': friction_cost,
+                'turnover': total_turnover,
             })
+            
+            # Save weights for next step
+            self.previous_weights = {t: item['weight'] for t, item in final_weights.items()}
 
         if not self.trade_log:
             print('No trades generated.')
