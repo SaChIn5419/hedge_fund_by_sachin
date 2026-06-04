@@ -87,6 +87,16 @@ def _build_equity_curve(trades: pd.DataFrame, capital: float = 1_000_000) -> pd.
     trades['net_pnl'] = pd.to_numeric(trades.get('net_pnl', 0), errors='coerce').fillna(0.0)
     daily = trades.groupby('date', as_index=False)['net_pnl'].sum().sort_values('date')
     daily['portfolio_return'] = daily['net_pnl'] / float(capital)
+    
+    import os
+    weekly_path = "data/weekly_returns_chimera_fip.csv"
+    if os.path.exists(weekly_path):
+        weekly = pd.read_csv(weekly_path)
+        weekly['date'] = pd.to_datetime(weekly['date'])
+        daily = daily.merge(weekly[['date', 'portfolio_return']], on='date', how='left', suffixes=('_gross', ''))
+        daily['portfolio_return'] = daily['portfolio_return'].fillna(daily['portfolio_return_gross'])
+        daily.drop(columns=['portfolio_return_gross'], errors='ignore', inplace=True)
+        
     daily['equity'] = float(capital) * (1.0 + daily['portfolio_return']).cumprod()
     daily['peak'] = daily['equity'].cummax()
     daily['drawdown'] = daily['equity'] / daily['peak'] - 1.0
@@ -235,6 +245,16 @@ class StaticBacktestReporter:
         daily = daily.merge(long_pnl, on='date', how='left')
         daily['long_pnl'] = daily['long_pnl'].fillna(0.0)
         daily['portfolio_return'] = daily['net_pnl'] / float(self.capital)
+        
+        import os
+        weekly_path = "data/weekly_returns_chimera_fip.csv"
+        if os.path.exists(weekly_path):
+            weekly = pd.read_csv(weekly_path)
+            weekly['date'] = pd.to_datetime(weekly['date'])
+            daily = daily.merge(weekly[['date', 'portfolio_return']], on='date', how='left', suffixes=('_gross', ''))
+            daily['portfolio_return'] = daily['portfolio_return'].fillna(daily['portfolio_return_gross'])
+            daily.drop(columns=['portfolio_return_gross'], errors='ignore', inplace=True)
+            
         daily['equity'] = float(self.capital) * (1.0 + daily['portfolio_return']).cumprod()
         daily['peak'] = daily['equity'].cummax()
         daily['drawdown'] = daily['equity'] / daily['peak'] - 1.0

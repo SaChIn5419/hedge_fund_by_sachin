@@ -14,10 +14,7 @@ from models.regime.context import score_news_regime_context
 from models.regime.probabilistic import RegimeFeatures, RegimeProbabilities, infer_regime_probabilities
 
 PROJECT_ROOT = str(REPO_ROOT)
-LEGACY_TRADELOGS = [
-    os.path.join(PROJECT_ROOT, 'data', 'tradelog_normal.csv'),
-    os.path.join(PROJECT_ROOT, 'data', 'chimera_blackbox_final.csv'),
-]
+
 
 CONFIG = {
     'CAPITAL': 1_000_000,
@@ -552,8 +549,7 @@ class ChimeraEngineNormal:
 
     def _write_trade_logs(self, log_df: pd.DataFrame):
         os.makedirs(os.path.dirname(PRIMARY_TRADELOG), exist_ok=True)
-        for path in [PRIMARY_TRADELOG] + LEGACY_TRADELOGS:
-            log_df.to_csv(path, index=False)
+        log_df.to_csv(PRIMARY_TRADELOG, index=False)
         print(f'--- SAVED: {PRIMARY_TRADELOG} ---')
 
     def run_simulation(self):

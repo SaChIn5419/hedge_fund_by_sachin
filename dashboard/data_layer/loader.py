@@ -53,6 +53,18 @@ def compute_daily_summary(trades, capital=1_000_000):
     ).reset_index()
 
     daily['portfolio_return'] = daily['net_pnl'] / float(capital)
+    
+    # Load friction-adjusted weekly returns to override the portfolio_return
+    weekly_path = "data/weekly_returns_chimera_fip.csv"
+    if os.path.exists(weekly_path):
+        weekly = pd.read_csv(weekly_path)
+        weekly['date'] = pd.to_datetime(weekly['date'])
+        # Merge on date to align returns exactly
+        daily = daily.merge(weekly[['date', 'portfolio_return']], on='date', how='left', suffixes=('_gross', ''))
+        # If any didn't match, fall back to gross return
+        daily['portfolio_return'] = daily['portfolio_return'].fillna(daily['portfolio_return_gross'])
+        daily.drop(columns=['portfolio_return_gross'], errors='ignore', inplace=True)
+    
     daily['equity'] = float(capital) * (1.0 + daily['portfolio_return']).cumprod()
     daily['peak'] = daily['equity'].cummax()
     daily['drawdown'] = daily['equity'] / daily['peak'] - 1.0

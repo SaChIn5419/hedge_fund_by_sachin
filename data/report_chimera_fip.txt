@@ -5,20 +5,20 @@ Benchmark          : ^NSEI
 
 PERFORMANCE
   Initial capital  : ₹1,000,000.00
-  Final equity     : ₹10,196,778.97
-  Total return     : 919.68%
-  CAGR             : 43.27%
+  Final equity     : ₹5,161,106.57
+  Total return     : 416.11%
+  CAGR             : 28.93%
 
 RISK
-  Volatility (ann.): 19.31%
-  Sharpe ratio     : 2.09
-  Sortino ratio    : 2.77
-  Max drawdown     : -23.50%
-  Calmar ratio     : 1.84
-  Ulcer index      : 0.0679
-  VaR 95%          : -3.58%
-  CVaR 95%         : -5.57%
-  Skew / Kurtosis  : -0.60 / 3.38
+  Volatility (ann.): 19.27%
+  Sharpe ratio     : 1.51
+  Sortino ratio    : 2.00
+  Max drawdown     : -24.12%
+  Calmar ratio     : 1.20
+  Ulcer index      : 0.0992
+  VaR 95%          : -3.77%
+  CVaR 95%         : -5.79%
+  Skew / Kurtosis  : -0.60 / 3.35
 
 ACTIVITY
   Trade rows       : 5875
@@ -34,7 +34,7 @@ BENCHMARK COMPARISON
   Benchmark return : 98.96%
   Benchmark CAGR   : 11.24%
   Benchmark max DD : -34.56%
-  Excess return    : 820.72%
+  Excess return    : 317.15%
 
 REGIME BREAKDOWN
   BULL     trades=4400 pnl=₹1,903,454 avg_gross=0.051 avg_conf=0.96
@@ -56,8 +56,8 @@ BREAK DIAGNOSTICS
   Break score          : 0.4117
 
 PRE / POST BREAK SPLIT
-  PRE  ret=-17.06% sharpe=-1.83 sortino=-1.52 win=56.2% vol=30.42% dd=-23.50%
-  POST ret=1129.37% sharpe=2.48 sortino=4.01 win=67.2% vol=18.33% dd=-19.50%
+  PRE  ret=-19.52% sharpe=-2.15 sortino=-1.85 win=50.0% vol=30.40% dd=-24.12%
+  POST ret=541.25% sharpe=1.86 sortino=2.94 win=62.9% vol=18.31% dd=-23.74%
 
 TOP ACTIVE WINNERS
   2020-04-03  DIVISLAB     ₹27,225  w=0.100  state=BEAR

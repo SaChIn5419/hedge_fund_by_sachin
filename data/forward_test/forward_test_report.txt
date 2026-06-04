@@ -1,6 +1,6 @@
 CHIMERA FORWARD TEST REPORT
 ============================================================
-Analysis date      : 2026-06-03 21:08
+Analysis date      : 2026-06-04 14:38
 Old backtest ended : 2026-03-27
 Forward period     : 2026-04-10 -> 2026-05-22
 Forward weeks      : 6
