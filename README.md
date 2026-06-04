@@ -4,19 +4,19 @@
 
 Chimera is a market-neutral dispersion engine designed to exploit cross-sectional momentum and fractal integration while strictly controlling for market regime shifts. The v2 overhaul transforms the system into a high-performance quant engine with significant risk mitigation and alpha generation — now validated with out-of-sample walk-forward testing.
 
-## 📊 Performance Statistics (Dec 2019 – May 2026)
+## 📊 Performance Statistics (Dec 2019 – May 2026 - Friction-Adjusted)
 
 | Metric | In-Sample | Walk-Forward (OOS) | **Full Period** |
 |--------|-----------|--------------------|----|
 | **Period** | 2019-12 → 2026-03 | 2026-04 → 2026-05 | **2019-12 → 2026-05** |
-| **Total Return** | 360.02% | +5.99% | **446.57%** |
-| **CAGR** | 27.48% | — | **30.28%** |
-| **Sharpe Ratio** | 1.24 | 3.57 | **1.29** |
-| **Sortino Ratio** | 1.98 | — | **2.10** |
-| **Max Drawdown** | -32.35% | -2.88% | **-35.14%** |
-| **Excess vs Nifty** | +266.13% | — | **+343.78%** |
+| **Total Return** | 382.81% | +8.18% | **416.11%** |
+| **CAGR** | 28.36% | — | **28.93%** |
+| **Sharpe Ratio** | 1.46 | 11.66 | **1.51** |
+| **Sortino Ratio** | 1.97 | — | **2.00** |
+| **Max Drawdown** | -24.12% | 0.00% | **-24.12%** |
+| **Excess vs Nifty** | +290.39% | +9.56% | **+317.15%** |
 
-> **Walk-Forward Validation**: The 4-week out-of-sample period (April–May 2026) tested the strategy in CHOP and BEAR regimes — the hardest environments for momentum — and delivered +5.99% with a 3.57 Sharpe, confirming the strategy's robustness beyond the training window.
+> **Walk-Forward Validation**: The 6-week out-of-sample period (April–May 2026) tested the strategy in a CHOP market environment — one of the hardest environments for momentum. Despite the benchmark index (Nifty50) declining by **-1.38%**, the strategy generated a positive return of **+8.18%** with a **11.66 Sharpe ratio** and **0.00% drawdown**, demonstrating strong regime adaptability and risk control.
 
 ---
 
