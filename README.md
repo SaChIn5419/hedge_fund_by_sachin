@@ -1,95 +1,173 @@
-# 🌌 Chimera Dispersion Engine v2
+# Chimera — Quantitative Equity Strategy (NSE India)
 
-**Autonomous Institutional-Grade Trading System for Indian Equities**
-
-Chimera is a market-neutral dispersion engine designed to exploit cross-sectional momentum and fractal integration while strictly controlling for market regime shifts. The v2 overhaul transforms the system into a high-performance quant engine with significant risk mitigation and alpha generation — now validated with out-of-sample walk-forward testing.
-
-## 📊 Performance Statistics (Dec 2019 – May 2026 - Friction-Adjusted)
-
-| Metric | In-Sample | Walk-Forward (OOS) | **Full Period** |
-|--------|-----------|--------------------|----|
-| **Period** | 2019-12 → 2026-03 | 2026-04 → 2026-05 | **2019-12 → 2026-05** |
-| **Total Return** | 382.81% | +8.18% | **416.11%** |
-| **CAGR** | 28.36% | — | **28.93%** |
-| **Sharpe Ratio** | 1.46 | 11.66 | **1.51** |
-| **Sortino Ratio** | 1.97 | — | **2.00** |
-| **Max Drawdown** | -24.12% | 0.00% | **-24.12%** |
-| **Excess vs Nifty** | +290.39% | +9.56% | **+317.15%** |
-
-> **Walk-Forward Validation**: The 6-week out-of-sample period (April–May 2026) tested the strategy in a CHOP market environment — one of the hardest environments for momentum. Despite the benchmark index (Nifty50) declining by **-1.38%**, the strategy generated a positive return of **+8.18%** with a **11.66 Sharpe ratio** and **0.00% drawdown**, demonstrating strong regime adaptability and risk control.
+A production-grade systematic long/short equity strategy for the NSE universe (~500 stocks). Chimera combines XGBoost-based stock selection, Mean-Variance Optimization, a probabilistic regime classifier, and a sigmoidal gold hedge into a weekly rebalancing pipeline.
 
 ---
 
-## 🛠️ Key Components
+## Architecture
 
-### 🧠 Signal Layer: Alpha Engine
-- **FIP (Fractal Integration Physics)**: Continuity-weighted momentum with volatility-adjusted normalization.
-- **RSI Overbought Filter**: Prevents momentum-crash entries in overextended stocks (RSI > 75).
-- **Mom5 Crash Filter**: Immediate exclusion of stocks experiencing high-velocity short-term crashes (>10%/week).
-- **CS-Z Scores**: Cross-sectional Z-score normalization for better dispersion capture.
-
-### 🛡️ Risk & Regime Layer
-- **Regime Classifier**: Multi-stage classification (BULL, CHOP, BEAR) using Nifty-200SMA and broad-market breadth.
-- **Zero-Correlation Setup**: Engineered for near-zero correlation with the benchmark index.
-- **Diversification**: 20 long-position names with 10% hard gross weight caps.
-
-### 🔄 Forward Test Pipeline
-- **`run_forward_test.py`**: Single-file, resumable pipeline that updates market data, re-runs the engine, and produces forward test reports.
-- Handles interruptions gracefully (battery, network) — re-run and it picks up where it left off.
-- Flags: `--data-only`, `--skip-data-update`, `--skip-reports`, `--cutoff-date`
-
----
-
-## 📈 Visual Report
-
-![Backtest Report](data/report_chimera_fip.png)
-
-## 📁 Repository Structure
-
-```text
-chimera/
-├── config/
-│   └── paths.py
-├── data/
-│   ├── features/
-│   ├── forward_test/         # Walk-forward validation outputs
-│   ├── market/
-│   └── news/
-├── engine/
-│   └── signal.py
-├── models/
-│   ├── alpha/
-│   └── regime/
-├── research/
-│   ├── experiments/
-│   │   ├── backtest_report.py
-│   │   └── tft/              # Temporal Fusion Transformer experiments
-│   └── notebooks/
-├── scripts/
-│   └── telemetry/            # Daily pipeline & systemd telemetry
-├── run_all_backtests.py
-├── run_forward_test.py       # Walk-forward validation pipeline
-├── chimera_engine.py
-└── chimera_backtest_report.py
+```
+Data (parquet) ──► Feature Engineering ──► XGBoost Alpha Model
+                                                    │
+                                                    ▼
+                  Regime Classifier ──────► MVO Portfolio Optimizer
+                  (HMM + probabilistic)       (OAS covariance, sector caps)
+                                                    │
+                                                    ▼
+                                          Sigmoidal Gold Hedge (GOLDBEES)
+                                                    │
+                                                    ▼
+                                          Weekly Rebalance Output
 ```
 
-- `engine/signal.py`: Core simulation and signal engine.
-- `run_forward_test.py`: Walk-forward test pipeline — data update, engine re-run, OOS analysis.
-- `research/experiments/backtest_report.py`: Static diagnostics and visualization suite.
-- `run_all_backtests.py`: Master execution script.
-- `config/paths.py`: Centralized repo and data path configuration.
-- `scripts/telemetry/`: Daily automated pipeline and systemd service for production telemetry.
-- `chimera_engine.py` and `chimera_backtest_report.py`: Compatibility wrappers for older imports.
+**Key components:**
 
-## 🖥️ Interactive Dashboard
+| Module | Description |
+|--------|-------------|
+| `engine/signal.py` | Core rebalancer — regime classification, portfolio construction, constraint enforcement |
+| `engine/ml_engine.py` | XGBoost alpha model wrapper (`ChimeraEngineML`, `RollingChimeraEngineML`) |
+| `models/regime/probabilistic.py` | Probabilistic regime classifier (BULL/CHOP/BEAR) |
+| `models/regime/ml_regime.py` | XGBoost-based regime scoring |
+| `run_forward_test.py` | Main production entry point — data update + engine run + reports |
+| `scripts/train_xgb.py` | Retrain XGBoost alpha model |
+| `scripts/train_regime.py` | Retrain regime classifier |
+| `scripts/create_ml_dataset.py` | Build feature dataset from price parquets |
 
-To start the local Dash visualization interface:
+---
 
+## Quickstart
+
+### 1. Install dependencies
 ```bash
-pip install dash dash-bootstrap-components plotly pandas numpy
-python dashboard/app.py
+pip install -r requirements.txt
 ```
 
-Then visit `http://127.0.0.1:8050` to view the comprehensive risk analytics, alpha lab, regime monitor, and validation tearsheets.
+### 2. Prepare data
+Price parquets (stocks, indices, macro) are not committed to this repo.
+Place them in:
+```
+data/stocks/*.parquet
+data/indices/*.parquet
+data/macro/*.parquet
+```
+Each parquet must have columns: `Date, Open, High, Low, Close, Volume, Ticker`.
 
-> **Note**: Raw market data lives in `chimera_data/` by default and is excluded from version control for size and license reasons. Generated reports and derived artifacts live under `data/`.
+### 3. Run the full pipeline
+```bash
+# Full pipeline: update data → run engine → generate reports
+python run_forward_test.py
+
+# Skip data download (use existing parquets)
+python run_forward_test.py --skip-data-update
+```
+
+### 4. Retrain models
+```bash
+# Build feature dataset
+python scripts/create_ml_dataset.py
+
+# Retrain XGBoost alpha model
+python scripts/train_xgb.py
+
+# Retrain regime classifier
+python scripts/train_regime.py
+```
+
+---
+
+## Configuration
+
+All runtime parameters live in `engine/signal.py → CONFIG`:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `LONG_NAMES` | 20 | Max long positions |
+| `FRICTION_BPS` | 15 | Round-trip transaction cost assumption |
+| `LONG_GROSS_BULL` | 1.00 | Gross exposure in BULL regime |
+| `LONG_GROSS_CHOP` | 0.30 | Gross exposure in CHOP regime |
+| `LONG_GROSS_BEAR` | 0.40 | Gross exposure in BEAR regime |
+| `USE_MVO` | False | Enable MVO optimizer (set True in production) |
+| `GOLD_MODEL` | `'baseline'` | Gold allocation model (`sigmoid` = champion) |
+
+Champion configuration (set in `run_forward_test.py`):
+```python
+CONFIG['USE_MVO'] = True
+CONFIG['COV_ESTIMATOR'] = 'oas'
+CONFIG['GOLD_MODEL'] = 'sigmoid'
+```
+
+---
+
+## Validated Performance (Exp_R01 — git: f9cef41, 2026-07-20)
+
+Champion config: `XGBoost Regr_Residual (rolling) + MVO(OAS) + Sigmoid Gold + REGIME_BANDS`
+
+| Window | Sharpe | CAGR | Max DD | Weeks |
+|--------|--------|------|--------|-------|
+| Validation (Jan 2023 – Sep 2025) | **1.94** | **+37.2%** | -10.4% | 143 |
+| Frozen Test (Oct 2025 – Jul 2026) | **0.56** | **+6.2%** | -10.6% | 40 |
+| Full OOS (Jan 2023 – Jul 2026) | **1.70** | **+29.7%** | -10.6% | 183 |
+
+**Constraints verified:** 0 sector cap breaches (>25%), 0 GOLDBEES policy cap breaches (>25%).
+
+> **Capacity bound:** Square-root market impact modelling bounds viable AUM to ≈ ₹5–10 Crore (~$600K–$1.2M USD). Performance degrades sharply beyond ₹10 Crore.
+
+---
+
+## Constraints & Risk Controls
+
+- **Single-stock cap:** 8% max position weight (enforced in MVO bounds)
+- **Sector cap:** 25% max aggregate sector weight (enforced as SLSQP hard constraint, post-aggregation)
+- **Gold sleeve cap:** 25% max GOLDBEES allocation (policy limit)
+- **Max leverage:** 1.0× (long-only, no net leverage)
+- **Regime gating:** CHOP/BEAR regimes reduce gross exposure to 30–40%
+
+---
+
+## Project Structure
+
+```
+hedgefund_chimera/
+├── config/paths.py          — Path constants
+├── engine/
+│   ├── signal.py            — Core rebalancer (ChimeraEngineNormal)
+│   ├── ml_engine.py         — ML engine (ChimeraEngineML, RollingChimeraEngineML)
+│   └── analytics/           — Performance metrics
+├── models/regime/
+│   ├── probabilistic.py     — Regime classifier
+│   ├── ml_regime.py         — XGBoost regime model
+│   └── hmm_smoother.pkl     — Trained HMM (not committed)
+├── scripts/
+│   ├── train_xgb.py         — Retrain alpha model
+│   ├── train_regime.py      — Retrain regime classifier
+│   ├── create_ml_dataset.py — Feature pipeline
+│   ├── validate_significance.py — Statistical audit
+│   └── reconcile_champion.py    — Champion verification run
+├── research/experiments/
+│   ├── backtest_report.py   — Report generator
+│   └── regime_validation.py — Regime performance reporter
+├── data/
+│   ├── evidence_registry.json        — Experiment log
+│   └── negative_results_registry.json
+├── run_forward_test.py      — Main entry point
+└── requirements.txt
+```
+
+---
+
+## Data Requirements
+
+Price data is **not committed** to this repository (too large, proprietary). You need:
+- NSE daily OHLCV parquets for ~500 stocks (2018–present)
+- Nifty 50, BankNifty index parquets
+- Macro parquets: India VIX, GOLDBEES, USD/INR, US10Y, Crude Oil, Silver
+
+---
+
+## Evidence Registry
+
+Experiment results are tracked in `data/evidence_registry.json` and `data/negative_results_registry.json`. Key findings:
+
+- `REGIME_BANDS` is the recommended live exposure mode
+- `DYNAMIC_GEOMETRY` (continuous κ scaling) is deprecated to research-only (100% bootstrap drawdown penalty)
+- MVO sector caps are applied post-aggregation via SLSQP — not affected by the pre-aggregation bug in the heuristic path

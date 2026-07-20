@@ -60,9 +60,9 @@ MACRO_YF_MAP = {
     'crude_oil': 'CL=F',
     'silver': 'SI=F',
     'gpr': None,          # no yfinance source
-    'bankbeES': None,     # ETF-like, skip
-    'juniorbeES': None,
-    'niftybeES': None,
+    'bankbeES': 'BANKBEES.NS',
+    'juniorbeES': 'JUNIORBEES.NS',
+    'niftybeES': 'NIFTYBEES.NS',
 }
 
 
@@ -201,8 +201,16 @@ def step1_update_market_data(workers: int = 5):
 # ═══════════════════════════════════════════════════════════════════════════
 def step2_run_engine():
     log('STEP 2: Running Chimera engine simulation...')
-    from engine.ml_engine import ChimeraEngineML
-    engine = ChimeraEngineML()
+    from engine.ml_engine import RollingChimeraEngineML
+    from engine.signal import CONFIG
+    
+    # Enable champion MVO optimization
+    CONFIG['USE_MVO'] = True
+    CONFIG['COV_ESTIMATOR'] = 'oas'
+    
+    # Initialize rolling engine with champion feature set
+    features = ['fip_z', 'mom20_z', 'mom60_z', 'vol20_z', 'beta', 'rsi14', 'structure_score', 'rvol20', 'vol_comp']
+    engine = RollingChimeraEngineML(model_prefix='Regr_Residual', features=features, is_ranker=False)
     engine.run_simulation()
     log('  Engine simulation complete.')
 

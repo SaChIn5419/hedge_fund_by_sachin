@@ -1,8 +1,13 @@
 import os
+import json
 import pandas as pd
 import numpy as np
 
+# Resolve base project directory dynamically to avoid CWD issues
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
 def load_trade_log(filepath="data/tradelog_chimera_fip.csv"):
+    filepath = os.path.join(BASE_DIR, filepath)
     if not os.path.exists(filepath):
         return pd.DataFrame()
     df = pd.read_csv(filepath)
@@ -18,6 +23,7 @@ def load_trade_log(filepath="data/tradelog_chimera_fip.csv"):
     return df
 
 def load_weekly_returns(filepath="data/weekly_returns_chimera_fip.csv"):
+    filepath = os.path.join(BASE_DIR, filepath)
     if not os.path.exists(filepath):
         return pd.DataFrame()
     df = pd.read_csv(filepath)
@@ -26,12 +32,29 @@ def load_weekly_returns(filepath="data/weekly_returns_chimera_fip.csv"):
     return df
 
 def load_regime_trace(filepath="data/regime_trace_chimera_fip.csv"):
+    filepath = os.path.join(BASE_DIR, filepath)
     if not os.path.exists(filepath):
         return pd.DataFrame()
     df = pd.read_csv(filepath)
     if not df.empty:
         df['date'] = pd.to_datetime(df['date'])
     return df
+
+def load_geometry_log(filepath="data/geometry_log.csv"):
+    filepath = os.path.join(BASE_DIR, filepath)
+    if not os.path.exists(filepath):
+        return pd.DataFrame()
+    df = pd.read_csv(filepath)
+    if not df.empty:
+        df['date'] = pd.to_datetime(df['date'])
+    return df
+
+def load_evidence_registry(filepath="data/evidence_registry.json"):
+    filepath = os.path.join(BASE_DIR, filepath)
+    if not os.path.exists(filepath):
+        return []
+    with open(filepath, 'r') as f:
+        return json.load(f)
 
 def compute_daily_summary(trades, capital=1_000_000):
     if trades.empty:
@@ -52,20 +75,22 @@ def compute_daily_summary(trades, capital=1_000_000):
         macro_score=('macro_score', 'mean'),
     ).reset_index()
 
-    daily['portfolio_return'] = daily['net_pnl'] / float(capital)
-    
-    # Load friction-adjusted weekly returns to override the portfolio_return
-    weekly_path = "data/weekly_returns_chimera_fip.csv"
+    weekly_path = os.path.join(BASE_DIR, "data/weekly_returns_chimera_fip.csv")
     if os.path.exists(weekly_path):
         weekly = pd.read_csv(weekly_path)
         weekly['date'] = pd.to_datetime(weekly['date'])
-        # Merge on date to align returns exactly
-        daily = daily.merge(weekly[['date', 'portfolio_return']], on='date', how='left', suffixes=('_gross', ''))
-        # If any didn't match, fall back to gross return
-        daily['portfolio_return'] = daily['portfolio_return'].fillna(daily['portfolio_return_gross'])
-        daily.drop(columns=['portfolio_return_gross'], errors='ignore', inplace=True)
-    
-    daily['equity'] = float(capital) * (1.0 + daily['portfolio_return']).cumprod()
+        
+        weekly['pnl_rs'] = weekly['portfolio_return'] * float(capital)
+        weekly['equity_val'] = float(capital) + weekly['pnl_rs'].cumsum()
+        weekly['true_return'] = weekly['pnl_rs'] / weekly['equity_val'].shift(1).fillna(float(capital))
+        
+        daily = daily.merge(weekly[['date', 'true_return', 'equity_val']], on='date', how='left')
+        daily['portfolio_return'] = daily['true_return']
+        daily['equity'] = daily['equity_val']
+        daily.drop(columns=['true_return', 'equity_val'], errors='ignore', inplace=True)
+    else:
+        daily['equity'] = float(capital) + daily['net_pnl'].cumsum()
+        daily['portfolio_return'] = daily['net_pnl'] / daily['equity'].shift(1).fillna(float(capital))
     daily['peak'] = daily['equity'].cummax()
     daily['drawdown'] = daily['equity'] / daily['peak'] - 1.0
     daily['market_state'] = grouped['market_state'].agg(lambda x: x.mode().iat[0] if not x.mode().empty else x.iloc[0]).values
@@ -83,7 +108,7 @@ def get_kpis(daily, capital=1_000_000):
     years = max((pd.to_datetime(daily['date'].iloc[-1]) - pd.to_datetime(daily['date'].iloc[0])).days / 365.25, 1e-9)
     cagr = (final / initial) ** (1 / years) - 1.0
 
-    annual_factor = 52 # Assuming weekly rebalancing primarily
+    annual_factor = 52
     sd = np.std(rets, ddof=1)
     sharpe = float((np.mean(rets) * annual_factor) / (sd * np.sqrt(annual_factor))) if sd > 1e-12 else 0.0
 
@@ -108,8 +133,5 @@ def get_current_holdings(trades, current_date=None):
         current_date = trades['date'].max()
 
     current_trades = trades[(trades['date'] == current_date) & (trades['weight'].abs() > 1e-12)].copy()
-    current_trades['Weight %'] = current_trades['weight'] * 100
     current_trades['Entry Date'] = current_trades['signal_date'].dt.strftime('%Y-%m-%d')
-    current_trades['Return'] = current_trades['fwd_return'] * 100
-
-    return current_trades[['ticker', 'side', 'Weight %', 'Entry Date', 'close', 'Return', 'net_pnl', 'market_state', 'score']]
+    return current_trades[['ticker', 'side', 'weight', 'Entry Date', 'close', 'fwd_return', 'net_pnl', 'market_state', 'score']]

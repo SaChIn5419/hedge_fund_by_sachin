@@ -2,33 +2,48 @@ import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from datetime import datetime
-import pandas as pd
 
-from data_layer.loader import load_trade_log, compute_daily_summary
-
-# Pre-load to get current regime
-trades = load_trade_log()
-daily = compute_daily_summary(trades)
-current_regime = daily['market_state'].iloc[-1] if not daily.empty else "UNKNOWN"
-last_update = daily['date'].iloc[-1].strftime('%Y-%m-%d') if not daily.empty else "N/A"
-
+# Global application setup
 app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.DARKLY])
-app.title = "Chimera Quant Desk"
+app.title = "Chimera Quant OS"
 
 sidebar = html.Div(
     [
-        html.H3("CHIMERA v2", className="display-6", style={"color": "#fff", "marginBottom": "20px"}),
-        html.Hr(),
-        html.P("Quant Desk Dashboard", className="lead", style={"color": "#8B949E", "fontSize": "0.9rem"}),
+        html.Div("CHIMERA OS", className="brand"),
+        html.Div("v2.1.0-FIP", className="version"),
+        html.Hr(style={"marginBottom": "15px"}),
+        
+        # We define explicit icons for the specific 7 OS pages
         dbc.Nav(
             [
                 dbc.NavLink(
-                    [html.I(className="bi bi-house-door me-2"), f"{page['name']}"],
-                    href=page["relative_path"],
-                    active="exact",
-                    style={"color": "#8B949E"}
-                )
-                for page in dash.page_registry.values()
+                    [html.I(className="bi bi-pie-chart-fill me-2"), "Portfolio"],
+                    href="/", active="exact"
+                ),
+                dbc.NavLink(
+                    [html.I(className="bi bi-cpu-fill me-2"), "Strategy"],
+                    href="/02-strategy", active="exact"
+                ),
+                dbc.NavLink(
+                    [html.I(className="bi bi-shield-shaded me-2"), "Risk"],
+                    href="/03-risk", active="exact"
+                ),
+                dbc.NavLink(
+                    [html.I(className="bi bi-journal-code me-2"), "Research"],
+                    href="/04-research", active="exact"
+                ),
+                dbc.NavLink(
+                    [html.I(className="bi bi-globe2 me-2"), "Market"],
+                    href="/05-market", active="exact"
+                ),
+                dbc.NavLink(
+                    [html.I(className="bi bi-lightning-charge-fill me-2"), "Execution"],
+                    href="/06-execution", active="exact"
+                ),
+                dbc.NavLink(
+                    [html.I(className="bi bi-eye-fill me-2"), "Explainability"],
+                    href="/07-explainability", active="exact"
+                ),
             ],
             vertical=True,
             pills=True,
@@ -41,23 +56,24 @@ navbar = html.Div(
     [
         html.Div(
             [
-                html.Span("Live Date: ", style={"color": "#8B949E"}),
-                html.Span(datetime.now().strftime('%Y-%m-%d %H:%M'), className="monospace"),
+                html.Span("LIVE: ", className="info"),
+                html.Span(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), className="val"),
             ],
-            style={"marginRight": "20px"}
+            className="status-item"
         ),
         html.Div(
             [
-                html.Span("Last Refresh: ", style={"color": "#8B949E"}),
-                html.Span(last_update, className="monospace"),
+                html.Span("BROKER API: ", className="info"),
+                html.Span("CONNECTED", className="val bull"),
             ],
-            style={"marginRight": "auto"}
+            className="status-item", style={"marginRight": "auto", "marginLeft": "20px"}
         ),
         html.Div(
             [
-                html.Span("Current Regime: ", style={"color": "#8B949E", "marginRight": "10px"}),
-                html.Span(current_regime, className=f"regime-badge {current_regime.lower()}")
-            ]
+                html.Span("REGIME: ", className="info"),
+                html.Span("UNKNOWN", id="global-regime-badge", className="status-badge bg-chop")
+            ],
+            className="status-item"
         )
     ],
     className="navbar"
@@ -66,11 +82,9 @@ navbar = html.Div(
 app.layout = html.Div(
     [
         sidebar,
+        navbar,
         html.Div(
-            [
-                navbar,
-                dash.page_container
-            ],
+            dash.page_container,
             className="content"
         )
     ]

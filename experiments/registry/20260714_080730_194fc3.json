@@ -1,0 +1,21 @@
+{
+    "experiment_id": "20260714_080730_194fc3",
+    "name": "EXP_002F_4W",
+    "timestamp": "2026-07-14T02:37:30.363584",
+    "kernel_version": "1.0.0",
+    "dataset_version": "sine_wave_v1",
+    "scenario_version": "default",
+    "model_version": "v1",
+    "random_seed": 42,
+    "config_hash": "4569f0bac0bac314efaf9dfb746d8c11f727b41d2ffd7b2d07ce3332e0bb8907",
+    "config": {
+        "policy": "MLP",
+        "obs_lags": 4,
+        "total_timesteps": 50000
+    },
+    "metrics": {
+        "mean_reward": -0.00010451949699211758,
+        "sharpe": -2.4164132026873846
+    },
+    "status": "COMPLETED"
+}

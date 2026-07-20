@@ -1,127 +1,235 @@
-/* Dashboard Theme - Dark Terminal Aesthetic */
+/* 
+  Chimera OS - Institutional Terminal Theme 
+  Inspired by Bloomberg Terminal, BlackRock Aladdin, & Grafana
+*/
+
+:root {
+    --bg-base: #000000;
+    --bg-panel: #161B22;
+    --bg-panel-hover: #21262D;
+    --border-color: #30363D;
+    --text-primary: #E6EDF3;
+    --text-secondary: #8B949E;
+    --color-bull: #00FF88;
+    --color-bear: #FF4560;
+    --color-chop: #FFC107;
+    --color-info: #00B4D8;
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', Courier, monospace;
+}
+
 body {
-    background-color: #0D1117;
-    color: #FFFFFF;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 12px;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #E6EDF3;
+    color: var(--text-primary);
     font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+h2 { font-size: 16px; }
+h3 { font-size: 14px; text-transform: uppercase; }
+h4 { font-size: 12px; }
+
+hr {
+    border-color: var(--border-color);
+    margin: 10px 0;
 }
 
-.kpi-value, .monospace {
-    font-family: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', Courier, monospace;
-}
-
-/* Sidebar styling */
+/* Sidebar Navigation */
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    width: 250px;
-    background-color: #161B22;
-    padding: 20px;
-    border-right: 1px solid #30363D;
+    width: 220px;
+    background-color: var(--bg-panel);
+    padding: 15px;
+    border-right: 1px solid var(--border-color);
     z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .brand {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.sidebar .version {
+    font-size: 10px;
+    color: var(--color-info);
+    font-family: var(--font-mono);
+    margin-bottom: 15px;
 }
 
 .sidebar a {
-    display: block;
-    color: #8B949E;
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
     text-decoration: none;
-    padding: 10px 15px;
-    margin-bottom: 5px;
-    border-radius: 6px;
-    transition: all 0.2s ease-in-out;
+    padding: 8px 12px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.1s;
 }
 
-.sidebar a:hover, .sidebar a.active {
-    background-color: #21262D;
-    color: #FFFFFF;
+.sidebar a:hover {
+    background-color: var(--bg-panel-hover);
+    color: var(--text-primary);
 }
 
-/* Main Content styling */
-.content {
-    margin-left: 290px;
-    padding: 20px 40px;
+.sidebar a.active {
+    background-color: var(--bg-panel-hover);
+    color: var(--text-primary);
+    border-left: 3px solid var(--color-info);
+    padding-left: 9px; /* offset border */
 }
 
-/* Top Navbar styling */
+/* Top Navbar / Status Bar */
 .navbar {
-    background-color: #161B22;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #30363D;
+    background-color: var(--bg-panel);
+    height: 36px;
+    padding: 0 15px;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    position: fixed;
+    top: 0;
+    left: 220px;
+    right: 0;
+    z-index: 999;
 }
 
-/* Card styling */
-.card {
-    background-color: #161B22;
-    border: 1px solid #30363D;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: box-shadow 0.2s ease-in-out;
+.navbar .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.card:hover {
-    box-shadow: 0 0 10px rgba(0, 180, 216, 0.15);
+.navbar .val {
+    color: var(--text-primary);
 }
 
-/* Regime Colors */
-.regime-bull { color: #00FF88; }
-.regime-bear { color: #FF4560; }
-.regime-chop { color: #FFC107; }
-
-.regime-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.85em;
-    text-transform: uppercase;
-}
-.regime-badge.bull { background-color: rgba(0, 255, 136, 0.2); color: #00FF88; border: 1px solid rgba(0, 255, 136, 0.5); }
-.regime-badge.bear { background-color: rgba(255, 69, 96, 0.2); color: #FF4560; border: 1px solid rgba(255, 69, 96, 0.5); }
-.regime-badge.chop { background-color: rgba(255, 193, 7, 0.2); color: #FFC107; border: 1px solid rgba(255, 193, 7, 0.5); }
-
-/* KPI Tile */
-.kpi-tile {
-    text-align: center;
+/* Main Content Area */
+.content {
+    margin-top: 36px;
+    margin-left: 220px;
     padding: 15px;
+    height: calc(100vh - 36px);
+    box-sizing: border-box;
+    overflow-y: auto;
 }
-.kpi-title {
-    color: #8B949E;
-    font-size: 0.9em;
-    margin-bottom: 5px;
+
+/* Grid Layouts for Dashboards */
+.os-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.grid-2col { grid-template-columns: repeat(2, 1fr); }
+.grid-3col { grid-template-columns: repeat(3, 1fr); }
+.grid-4col { grid-template-columns: repeat(4, 1fr); }
+.grid-sidebar { grid-template-columns: 3fr 1fr; }
+
+/* OS Panel / Widget styling */
+.os-panel {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-title {
+    font-size: 11px;
+    color: var(--text-secondary);
     text-transform: uppercase;
+    font-weight: 600;
     letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
 }
-.kpi-value {
-    font-size: 1.8em;
+
+/* Typography */
+.mono {
+    font-family: var(--font-mono);
+}
+
+.metric-val {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.metric-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Color States */
+.bull { color: var(--color-bull); }
+.bear { color: var(--color-bear); }
+.chop { color: var(--color-chop); }
+.info { color: var(--color-info); }
+
+.bg-bull { background-color: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); color: var(--color-bull); }
+.bg-bear { background-color: rgba(255, 69, 96, 0.1); border: 1px solid rgba(255, 69, 96, 0.3); color: var(--color-bear); }
+.bg-chop { background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); color: var(--color-chop); }
+
+.status-badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    text-transform: uppercase;
     font-weight: bold;
 }
-.kpi-positive { color: #00FF88; }
-.kpi-negative { color: #FF4560; }
-.kpi-neutral { color: #E6EDF3; }
 
-/* Data tables */
+/* Data Tables */
 .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th {
-    background-color: #21262D !important;
-    color: #8B949E !important;
-    border: 1px solid #30363D !important;
+    background-color: var(--bg-panel-hover) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
     font-weight: 600;
+    font-size: 11px;
+    text-align: left !important;
+    padding: 4px 8px !important;
 }
+
 .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td {
-    background-color: #161B22 !important;
-    color: #E6EDF3 !important;
-    border: 1px solid #30363D !important;
+    background-color: var(--bg-panel) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 8px !important;
+}
+
+/* Plotly Graph Overrides (applied via python config, but fallback here) */
+.js-plotly-plot .plotly .main-svg {
+    background: transparent !important;
 }

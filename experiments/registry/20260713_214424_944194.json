@@ -1,0 +1,24 @@
+{
+    "experiment_id": "20260713_214424_944194",
+    "name": "EXP_002_Stacked",
+    "timestamp": "2026-07-13T16:14:24.508881",
+    "kernel_version": "1.0.0",
+    "dataset_version": "temporal_mock_v1",
+    "scenario_version": "default",
+    "model_version": "v1",
+    "random_seed": 42,
+    "config_hash": "1f065f6bc1a16b90a9be50bfed6dc1e0ad64e9217d63a2cc5d3cdc528cab8e3c",
+    "config": {
+        "workstream": "D_State",
+        "hypothesis": "Stacked features allow MLP to capture temporal signals without LSTM.",
+        "obs_features": [
+            "raw_feature_t_minus_1_to_4"
+        ],
+        "total_timesteps": 50000
+    },
+    "metrics": {
+        "mean_reward": 0.0001886344110399981,
+        "sharpe": 0.8499513792576844
+    },
+    "status": "COMPLETED"
+}

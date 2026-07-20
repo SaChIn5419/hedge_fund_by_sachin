@@ -1,0 +1,50 @@
+[
+  {
+    "hypothesis_id": "Neg_001",
+    "title": "CSD Autocorrelation Precursor to State Transitions",
+    "rejected_hypothesis": "Pre-transition weeks into S0 exhibit statistically significant spikes in rolling lag-1 autocorrelation.",
+    "empirical_evidence": "t-statistic of 1.01 (p-value = 0.32) fails to reject the null hypothesis of equal autocorrelation between pre-transition and normal weeks.",
+    "date_logged": "2026-07-17",
+    "impact_on_architecture": "CSD autocorrelation cannot be used as an early-warning transition trigger."
+  },
+  {
+    "hypothesis_id": "Neg_002",
+    "title": "Memoryless First-Order Markov Residence",
+    "rejected_hypothesis": "State residence durations follow a memoryless Exponential distribution with constant hazard rates.",
+    "empirical_evidence": "Log-Normal distribution minimizes AIC across all 5 states (e.g. S2 Log-Normal AIC 131.7 vs Exponential 145.0), proving non-Markovian duration dependence.",
+    "date_logged": "2026-07-17",
+    "impact_on_architecture": "Replaced pure Markov transition matrix with semi-Markov Log-Normal duration models."
+  },
+  {
+    "hypothesis_id": "Neg_003",
+    "title": "S0 Binary Transition Prediction via Lagged Linear Features",
+    "rejected_hypothesis": "Logistic regression trained on lagged geometry features can forecast binary transitions into S0 out-of-sample.",
+    "empirical_evidence": "Validation Brier Skill Score was -2.44 and Frozen Test BSS was -2.55 (worse than climatological probability). Precision and Recall were 0.0% at optimal decision thresholds.",
+    "date_logged": "2026-07-17",
+    "impact_on_architecture": "Abandoned hard binary state switches in favor of continuous coordinate risk scaling."
+  },
+  {
+    "hypothesis_id": "Neg_004",
+    "title": "Out-of-Sample S0 Alpha Attribution & Occurrence",
+    "rejected_hypothesis": "S0 state alpha outperformance is externally validated out-of-sample across 2023-2026.",
+    "empirical_evidence": "Strict chronological auditing proves zero S0 weeks occurred out-of-sample (0 / 170 weeks in 2023-2026 Validation & Frozen Test). S0 outperformance is an In-Sample (2019-2022) discovery artifact.",
+    "date_logged": "2026-07-19",
+    "impact_on_architecture": "Removed S0 out-of-sample alpha claims; state labels are designated strictly as analytical interpretations rather than live control inputs."
+  },
+  {
+    "hypothesis_id": "Neg_005",
+    "title": "ElasticNet Incremental Forecasting Skill for Effective Breadth",
+    "rejected_hypothesis": "ElasticNet multivariate lagged regression provides incremental forecasting value for effective breadth beyond simple autocorrelation.",
+    "empirical_evidence": "Naive AR(1) persistence (pred(t+1) = B(t)) achieves out-of-sample R2 of 0.8798 (Validation) and 0.9290 (Frozen Test), outperforming ElasticNet (0.8527 and 0.9047). High R2 is entirely driven by slow-moving autocorrelation.",
+    "date_logged": "2026-07-19",
+    "impact_on_architecture": "De-emphasized ElasticNet feature skill; effective breadth is recognized as a persistent AR(1) coordinate."
+  },
+  {
+    "hypothesis_id": "Neg_006",
+    "title": "Dynamic Kappa Drawdown Control Dominance over Constant Leverage",
+    "rejected_hypothesis": "Dynamic forecast-based kappa scaling provides superior drawdown control compared to a constant-exposure benchmark at the same average leverage.",
+    "empirical_evidence": "Constant exposure (kappa_bar = 0.76/0.83) achieves smaller Max Drawdowns in both windows (-8.73% Val, -10.84% Test) than Dynamic kappa (-9.12% Val, -11.80% Test). Paired t-tests show return differences are statistically insignificant (p = 0.25 Val, p = 0.94 Test).",
+    "date_logged": "2026-07-19",
+    "impact_on_architecture": "Rewrote Section 8.2/9.2 to explicitly state Dynamic kappa functions primarily as average de-leveraging rather than an information-driven risk valve."
+  }
+]

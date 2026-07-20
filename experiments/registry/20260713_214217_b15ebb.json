@@ -1,0 +1,24 @@
+{
+    "experiment_id": "20260713_214217_b15ebb",
+    "name": "EXP_002_Base_Unstacked",
+    "timestamp": "2026-07-13T16:12:17.314783",
+    "kernel_version": "1.0.0",
+    "dataset_version": "temporal_mock_v1",
+    "scenario_version": "default",
+    "model_version": "v1",
+    "random_seed": 42,
+    "config_hash": "8a773c8370858a4e1247020f711ae3940959b5cc0d501f852896aa3690b5c9ab",
+    "config": {
+        "workstream": "D_State",
+        "hypothesis": "Agent cannot learn a delayed temporal signal without stacked features.",
+        "obs_features": [
+            "raw_feature_t"
+        ],
+        "total_timesteps": 50000
+    },
+    "metrics": {
+        "mean_reward": -0.059352512933908405,
+        "sharpe": -29.46454568030426
+    },
+    "status": "COMPLETED"
+}

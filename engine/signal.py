@@ -10,13 +10,15 @@ import pandas as pd
 import yfinance as yf
 
 from config.paths import DATA_DIR, NEWS_DAILY_FEATURES_PATH, PRIMARY_TRADELOG, REGIME_TRACE_PATH, REPO_ROOT, WEEKLY_TRACE_PATH
-from models.regime.context import score_news_regime_context
+# news sentiment discarded — context import removed
 from models.regime.probabilistic import RegimeFeatures, RegimeProbabilities, infer_regime_probabilities
 
 PROJECT_ROOT = str(REPO_ROOT)
 
 
 CONFIG = {
+    'REGIME_TEMPERATURE': 5.0,
+    'USE_MVO': False,
     'CAPITAL': 1_000_000,
     'MAX_LEVERAGE': 1.00,
     'LOOKBACK_FIP': 60,
@@ -30,7 +32,7 @@ CONFIG = {
     'LOOKBACK_CONF': 60,
     'MIN_HISTORY': 220,
     'MIN_PRICE': 50.0,
-    'MIN_ADV20': 200_000.0,
+    'MIN_ADV20': 5_000_000.0,
     'LONG_NAMES': 20,
     'SHORT_NAMES': 5,
     'LONG_GROSS_BULL': 1.00,
@@ -53,7 +55,11 @@ CONFIG = {
     'USDINR_CANDIDATES': ['usd_inr', 'usdinr', 'inr=x', 'inrusd'],
     'US10Y_CANDIDATES': ['us10y', '10y_usdbond_rates', '^tnx', 'tnx'],
     'GOLD_CANDIDATES': ['goldbees', 'gold', 'gold_bees', 'gc=f'],
+    'OTHER_MACRO_CANDIDATES': ['crude_oil', 'silver', 'gpr', 'bankbeES', 'juniorbeES', 'niftybeES'],
 }
+
+import models.regime.probabilistic
+models.regime.probabilistic.REGIME_TEMPERATURE = CONFIG.get('REGIME_TEMPERATURE', 1.0)
 
 
 @dataclass
@@ -77,6 +83,13 @@ class AssetSnapshot:
     fip_z: np.ndarray
     rsi14: np.ndarray
     mom5: np.ndarray
+    vol252: np.ndarray
+    max_dd: np.ndarray
+    r2: np.ndarray
+    er20: np.ndarray
+    vol_comp: np.ndarray
+    rvol20: np.ndarray
+    nifty_excess_20: np.ndarray
 
 
 def _safe_name(name: str) -> str:
@@ -196,8 +209,9 @@ def _rolling_structure(close: pd.Series, lookback: int = 60) -> pd.Series:
 
 
 class ChimeraEngineNormal:
-    def __init__(self):
-        print('--- CHIMERA NORMAL: CAUSAL LONG/SHORT REBALANCER ---')
+    def __init__(self, exposure_mode: str = 'REGIME_BANDS'):
+        print(f'--- CHIMERA NORMAL: CAUSAL LONG/SHORT REBALANCER (Mode: {exposure_mode}) ---')
+        self.exposure_mode = exposure_mode
         self.trade_log: List[dict] = []
         self.weekly_returns: List[dict] = []
         self.regime_trace: List[dict] = []
@@ -280,20 +294,24 @@ class ChimeraEngineNormal:
         return data_map
 
     def _build_asset_cache(self, data_map: Dict[str, pd.DataFrame], calendar_index: pd.DatetimeIndex) -> List[AssetSnapshot]:
+        self.dates = calendar_index
         broad_key = _resolve_key(data_map, CONFIG['BROAD_TICKER_CANDIDATES'])
         if broad_key is None:
             raise ValueError('Missing broad market reference series')
         broad_close = data_map[broad_key]['Close'].reindex(calendar_index).astype(float)
         broad_ret = broad_close.pct_change()
+        broad_mom20 = broad_close.pct_change(20)
 
         excluded = {
             _safe_name(k)
-            for k in CONFIG['BROAD_TICKER_CANDIDATES'] + CONFIG['RISK_TICKER_CANDIDATES'] + CONFIG['FEAR_TICKER_CANDIDATES'] + CONFIG['USDINR_CANDIDATES'] + CONFIG['US10Y_CANDIDATES'] + CONFIG['GOLD_CANDIDATES']
+            for k in CONFIG['BROAD_TICKER_CANDIDATES'] + CONFIG['RISK_TICKER_CANDIDATES'] + CONFIG['FEAR_TICKER_CANDIDATES'] + CONFIG['USDINR_CANDIDATES'] + CONFIG['US10Y_CANDIDATES'] + CONFIG['GOLD_CANDIDATES'] + CONFIG['OTHER_MACRO_CANDIDATES']
         }
 
         cache: List[AssetSnapshot] = []
         for ticker, df in data_map.items():
             if _safe_name(ticker) in excluded or 'Close' not in df.columns:
+                continue
+            if len(df['Close'].dropna()) < CONFIG['MIN_HISTORY']:
                 continue
             aligned = df.reindex(calendar_index)
             close = aligned['Close'].astype(float)
@@ -310,6 +328,37 @@ class ChimeraEngineNormal:
             beta = ret.rolling(CONFIG['LOOKBACK_BETA'], min_periods=max(20, CONFIG['LOOKBACK_BETA'] // 2)).cov(broad_ret) / broad_ret.rolling(CONFIG['LOOKBACK_BETA'], min_periods=max(20, CONFIG['LOOKBACK_BETA'] // 2)).var()
             rsi14 = _rsi(close, 14)
             mom5 = close.pct_change(5)
+
+            # Quality & Defensive Proxies (252-day lookback)
+            vol252 = ret.rolling(252, min_periods=126).std() * np.sqrt(252)
+            
+            # Max DD
+            roll_max = close.rolling(252, min_periods=1).max()
+            drawdown = (close - roll_max) / (roll_max + 1e-9)
+            max_dd = drawdown.rolling(252, min_periods=126).min()
+            
+            # log-price trend R2
+            y_log = np.log(close + 1e-9)
+            x_seq = pd.Series(np.arange(len(y_log)), index=calendar_index)
+            mean_y = y_log.rolling(252, min_periods=126).mean()
+            var_y = y_log.rolling(252, min_periods=126).var()
+            mean_x = x_seq.rolling(252, min_periods=126).mean()
+            var_x = x_seq.rolling(252, min_periods=126).var()
+            mean_xy = (x_seq * y_log).rolling(252, min_periods=126).mean()
+            cov_xy = mean_xy - mean_x * mean_y
+            r2 = (cov_xy ** 2) / (var_x * var_y + 1e-9)
+
+            # New Feature Families
+            abs_diff = close.diff().abs()
+            sum_abs_diff = abs_diff.rolling(20, min_periods=10).sum()
+            displacement = (close - close.shift(20)).abs()
+            er20 = displacement / (sum_abs_diff + 1e-9)
+            
+            vol100 = ret.rolling(100, min_periods=50).std() * np.sqrt(252)
+            vol_comp = vol20 / (vol100 + 1e-9)
+            
+            rvol20 = volume / (volume.rolling(20, min_periods=10).mean() + 1e-9)
+            nifty_excess_20 = mom20 - broad_mom20
 
             cache.append(AssetSnapshot(
                 ticker=ticker,
@@ -331,7 +380,39 @@ class ChimeraEngineNormal:
                 fip_z=_z(fip, CONFIG['LOOKBACK_CONF']).to_numpy(dtype=float),
                 rsi14=rsi14.to_numpy(dtype=float),
                 mom5=mom5.to_numpy(dtype=float),
+                vol252=vol252.to_numpy(dtype=float),
+                max_dd=max_dd.to_numpy(dtype=float),
+                r2=r2.to_numpy(dtype=float),
+                er20=er20.to_numpy(dtype=float),
+                vol_comp=vol_comp.to_numpy(dtype=float),
+                rvol20=rvol20.to_numpy(dtype=float),
+                nifty_excess_20=nifty_excess_20.to_numpy(dtype=float),
             ))
+            
+        # Precompute macro regime metrics across the full calendar
+        broad, risk, fear, usd, us10y, gold = self._build_market_frame(data_map, calendar_index)
+        
+        self.precomputed_regimes = {}
+        for idx in range(len(calendar_index)):
+            breadth_vals = [a.above200[idx] for a in cache if idx < len(a.above200) and np.isfinite(a.above200[idx])]
+            breadth = float(np.nanmean(breadth_vals)) if breadth_vals else np.nan
+            
+            regime, breadth, vix, macro_score, regime_reason, confidence, news_bias, suppression_score, news_reason, p_bull, p_chop, p_bear, transition_risk = self._classify_regime(
+                idx, broad, risk, fear, usd, us10y, gold, breadth
+            )
+            
+            self.precomputed_regimes[idx] = {
+                'regime_confidence': confidence,
+                'p_bull': p_bull,
+                'p_chop': p_chop,
+                'p_bear': p_bear,
+                'transition_risk': transition_risk,
+                'vix': vix,
+                'macro_score': macro_score,
+                'news_bias': news_bias,
+                'suppression_score': suppression_score,
+            }
+            
         return cache
 
     def _build_market_frame(self, data_map: Dict[str, pd.DataFrame], calendar_index: pd.DatetimeIndex):
@@ -342,7 +423,9 @@ class ChimeraEngineNormal:
             frame = data_map[key].reindex(calendar_index).copy()
             if 'Close' not in frame.columns:
                 return None
-            frame['Close'] = frame['Close'].astype(float)
+            frame['Close'] = frame['Close'].astype(float).ffill().bfill()
+            if 'Open' in frame.columns:
+                frame['Open'] = frame['Open'].astype(float).ffill().bfill()
             frame['RET1'] = frame['Close'].pct_change()
             frame['SMA50'] = frame['Close'].rolling(50, min_periods=25).mean()
             frame['SMA200'] = frame['Close'].rolling(200, min_periods=100).mean()
@@ -370,8 +453,11 @@ class ChimeraEngineNormal:
         slope = float(broad['SLOPE100'].iloc[idx]) if pd.notna(broad['SLOPE100'].iloc[idx]) else np.nan
         momz = float(broad['MOM20_Z'].iloc[idx]) if pd.notna(broad['MOM20_Z'].iloc[idx]) else np.nan
         vix = float(fear['Close'].iloc[idx]) if fear is not None and pd.notna(fear['Close'].iloc[idx]) else np.nan
-        news_row = None if self.news_context is None or idx >= len(self.news_context) else self.news_context.iloc[idx]
-        news_context = score_news_regime_context(news_row)
+        # News sentiment feature disabled — neutral stubs
+        news_bias = 0.0
+        suppression_score = 0.0
+        confidence_delta = 0.0
+        news_reason = 'disabled'
 
         risk_ok = True
         if risk is not None and pd.notna(risk['SMA50'].iloc[idx]) and pd.notna(risk['Close'].iloc[idx]):
@@ -390,7 +476,7 @@ class ChimeraEngineNormal:
             macro_count += 1
         macro_score = macro_score / macro_count if macro_count else 0.0
 
-        macro_score += 0.15 * news_context.regime_bias
+        # macro_score += 0.15 * news_bias  # news disabled
 
         if any(pd.isna(x) for x in [sma200, eff, slope, momz]):
             probs = infer_regime_probabilities(
@@ -400,13 +486,13 @@ class ChimeraEngineNormal:
                     breadth_score=0.0,
                     risk_score=0.0,
                     macro_score=macro_score,
-                    news_bias=news_context.regime_bias,
-                    suppression_score=news_context.suppression_score,
+                    news_bias=news_bias,
+                    suppression_score=suppression_score,
                 ),
                 previous=self.prev_regime_probs,
             )
             self.prev_regime_probs = probs
-            return 'CHOP', breadth, vix, macro_score, 'Insufficient history', probs.confidence, news_context.regime_bias, news_context.suppression_score, news_context.reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
+            return 'CHOP', breadth, vix, macro_score, 'Insufficient history', probs.confidence, news_bias, suppression_score, news_reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
 
         # PRIMARY: Nifty above/below SMA200 is the dominant signal
         above_sma = 1.0 if price >= sma200 else -1.0
@@ -432,22 +518,22 @@ class ChimeraEngineNormal:
                 breadth_score=breadth_score,
                 risk_score=risk_score,
                 macro_score=macro_score,
-                news_bias=news_context.regime_bias,
-                suppression_score=news_context.suppression_score,
+                news_bias=news_bias,
+                suppression_score=suppression_score,
             ),
             previous=self.prev_regime_probs,
         )
         self.prev_regime_probs = probs
-        confidence = float(np.clip(probs.confidence + news_context.confidence_delta, 0.0, 1.0))
+        confidence = float(np.clip(probs.confidence + confidence_delta, 0.0, 1.0))
 
         if probs.selected_regime == 'BULL' and breadth >= CONFIG['BREADTH_BULL']:
-            reason = f'Probabilistic bull regime | {news_context.reason}'
-            return 'BULL', breadth, vix, macro_score, reason, confidence, news_context.regime_bias, news_context.suppression_score, news_context.reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
+            reason = 'Probabilistic bull regime'
+            return 'BULL', breadth, vix, macro_score, reason, confidence, news_bias, suppression_score, news_reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
         if probs.selected_regime == 'BEAR' and (breadth < CONFIG['BREADTH_BEAR'] or (np.isfinite(vix) and vix >= CONFIG['VIX_HIGH'])):
-            reason = f'Probabilistic bear regime | {news_context.reason}'
-            return 'BEAR', breadth, vix, macro_score, reason, confidence, news_context.regime_bias, news_context.suppression_score, news_context.reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
-        reason = f'Probabilistic mixed/chop regime | {news_context.reason}'
-        return 'CHOP', breadth, vix, macro_score, reason, confidence, news_context.regime_bias, news_context.suppression_score, news_context.reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
+            reason = 'Probabilistic bear regime'
+            return 'BEAR', breadth, vix, macro_score, reason, confidence, news_bias, suppression_score, news_reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
+        reason = 'Probabilistic mixed/chop regime'
+        return 'CHOP', breadth, vix, macro_score, reason, confidence, news_bias, suppression_score, news_reason, probs.bull, probs.chop, probs.bear, probs.transition_risk
 
     def _score_universe(self, asset_cache: List[AssetSnapshot], signal_idx: int) -> pd.DataFrame:
         rows = []
@@ -480,8 +566,28 @@ class ChimeraEngineNormal:
                 'structure': str(a.structure[signal_idx]),
                 'rsi14': float(a.rsi14[signal_idx]) if np.isfinite(a.rsi14[signal_idx]) else np.nan,
                 'mom5': float(a.mom5[signal_idx]) if np.isfinite(a.mom5[signal_idx]) else np.nan,
+                'vol252': float(a.vol252[signal_idx]) if np.isfinite(a.vol252[signal_idx]) else np.nan,
+                'max_dd': float(a.max_dd[signal_idx]) if np.isfinite(a.max_dd[signal_idx]) else np.nan,
+                'r2': float(a.r2[signal_idx]) if np.isfinite(a.r2[signal_idx]) else np.nan,
+                'er20': float(a.er20[signal_idx]) if np.isfinite(a.er20[signal_idx]) else np.nan,
+                'vol_comp': float(a.vol_comp[signal_idx]) if np.isfinite(a.vol_comp[signal_idx]) else np.nan,
+                'rvol20': float(a.rvol20[signal_idx]) if np.isfinite(a.rvol20[signal_idx]) else np.nan,
+                'nifty_excess_20': float(a.nifty_excess_20[signal_idx]) if np.isfinite(a.nifty_excess_20[signal_idx]) else np.nan,
             }
-            if not np.isfinite(row['fip']) or not np.isfinite(row['mom60']) or not np.isfinite(row['vol20']):
+            macro_data = getattr(self, 'precomputed_regimes', {}).get(signal_idx, {
+                'regime_confidence': 0.5, 'p_bull': 0.33, 'p_chop': 0.33, 'p_bear': 0.33,
+                'transition_risk': 0.0, 'vix': 15.0, 'macro_score': 0.0
+            })
+            row.update({
+                'p_bull': float(macro_data.get('p_bull', 0.33)),
+                'p_chop': float(macro_data.get('p_chop', 0.33)),
+                'p_bear': float(macro_data.get('p_bear', 0.33)),
+                'vix': float(macro_data.get('vix', 15.0)),
+                'macro_score': float(macro_data.get('macro_score', 0.0)),
+                'transition_risk': float(macro_data.get('transition_risk', 0.0)),
+                'regime_confidence': float(macro_data.get('regime_confidence', 0.5)),
+            })
+            if not np.isfinite(row['fip']) or not np.isfinite(row['mom60']) or not np.isfinite(row['vol20']) or not np.isfinite(row['vol252']) or not np.isfinite(row['max_dd']) or not np.isfinite(row['r2']) or not np.isfinite(row['er20']) or not np.isfinite(row['vol_comp']) or not np.isfinite(row['rvol20']) or not np.isfinite(row['nifty_excess_20']):
                 continue
             rows.append(row)
         if not rows:
@@ -532,9 +638,42 @@ class ChimeraEngineNormal:
             0.05 * df['rank_rsi14'].fillna(0.5) +  # Prefer to short overbought stocks
             df['rsi_penalty_short']
         )
-        return df.sort_values('long_score', ascending=False).reset_index(drop=True)
+        
+        # Defensive Quality / Low-Vol score
+        df['pct_vol'] = df['vol252'].rank(pct=True, ascending=False)
+        df['pct_max_dd'] = df['max_dd'].rank(pct=True, ascending=True)
+        df['pct_r2'] = df['r2'].rank(pct=True, ascending=True)
+        df['defensive_score'] = 0.4 * df['pct_r2'].fillna(0.5) + 0.3 * df['pct_vol'].fillna(0.5) + 0.3 * df['pct_max_dd'].fillna(0.5)
+        
+        df = df.sort_values('long_score', ascending=False).reset_index(drop=True)
+
+        # RL Meta-Controller: confidence_threshold pre-MVO filter
+        # If set, remove stocks whose |ml_pred_return| z-score is below threshold
+        # (only applied after ML scoring in subclasses; base class skips if column absent)
+        if hasattr(self, 'rl_actions') and 'confidence_threshold' in self.rl_actions:
+            threshold = float(self.rl_actions['confidence_threshold'])
+            if 'ml_pred_return' in df.columns and threshold > 0.0:
+                # Compute cross-sectional z-score of |ml_pred_return|
+                abs_pred = df['ml_pred_return'].abs()
+                mu_p, sd_p = abs_pred.mean(), abs_pred.std()
+                df['_pred_z'] = (abs_pred - mu_p) / (sd_p + 1e-9)
+                df = df[df['_pred_z'] >= threshold].drop(columns=['_pred_z']).reset_index(drop=True)
+
+        return df
 
     def _allocate_gross_budget(self, regime: str, long_count: int, short_count: int, confidence: float) -> Tuple[float, float]:
+        mode = getattr(self, 'exposure_mode', 'REGIME_BANDS')
+        if mode == 'CONSTANT_DELEVERAGE':
+            return 0.7731, 0.0
+        elif mode == 'DYNAMIC_GEOMETRY':
+            state_dict = getattr(self, 'current_macro_state', {})
+            breadth = state_dict.get('breadth', 0.43)
+            vix = state_dict.get('vix', 15.0)
+            vix_val = vix if np.isfinite(vix) else 15.0
+            breadth_val = breadth if np.isfinite(breadth) else 0.43
+            kappa = float(np.clip(1.0 - 0.02 * (vix_val - 15.0) + 0.05 * (breadth_val - 0.43), 0.20, 1.00))
+            return kappa, 0.0
+
         if regime == 'BULL':
             long_gross = CONFIG['LONG_GROSS_BULL']
             short_gross = CONFIG['SHORT_GROSS_BULL'] if short_count > 0 else 0.0
@@ -547,70 +686,217 @@ class ChimeraEngineNormal:
         scale = 0.75 + 0.50 * float(np.clip(confidence, 0.0, 1.0))
         return long_gross * scale, short_gross * scale
 
+    def _optimize_portfolio_weights(self, top_longs, top_defensive, long_budget, p_bear, current_idx):
+        import scipy.optimize as sco
+        
+        # Combine tickers
+        tickers = list(set(top_longs['ticker'].tolist() + top_defensive['ticker'].tolist()))
+        N = len(tickers)
+        if N == 0:
+            return {}
+            
+        # Get expected returns
+        mu = []
+        for tk in tickers:
+            row = None
+            if not top_longs.empty and tk in top_longs['ticker'].values:
+                row = top_longs[top_longs['ticker'] == tk].iloc[0]
+            else:
+                row = top_defensive[top_defensive['ticker'] == tk].iloc[0]
+            
+            # Use ml_pred_return if available, else long_score or defensive_score
+            mu_val = row.get('ml_pred_return', row.get('long_score', row.get('defensive_score', 0.0)))
+            mu.append(float(mu_val))
+        mu = np.array(mu)
+        
+        # Get covariance matrix over trailing 252 days
+        slice_idx = slice(max(0, current_idx - 252), current_idx)
+        returns_window = self.daily_returns_df[tickers].iloc[slice_idx].fillna(0.0)
+        
+        cov_estimator = CONFIG.get('COV_ESTIMATOR', 'sample')
+        if cov_estimator == 'ledoit_wolf':
+            from sklearn.covariance import ledoit_wolf
+            cov, _ = ledoit_wolf(returns_window.values)
+        elif cov_estimator == 'oas':
+            from sklearn.covariance import oas
+            cov, _ = oas(returns_window.values)
+        elif cov_estimator == 'ewma':
+            ewm_cov = returns_window.ewm(span=63).cov()
+            last_date = returns_window.index[-1]
+            cov = ewm_cov.loc[last_date].values
+        else:
+            cov = returns_window.cov().values
+            
+        # Add small shrinkage diagonal for numerical stability
+        cov = cov.copy() + 1e-4 * np.eye(N)
+        
+        # Get previous weights
+        prev_w = np.array([self.previous_weights.get(tk, 0.0) for tk in tickers])
+        
+        # Setup optimization variables and bounds
+        # Bounds: 0 <= w_i <= 0.08
+        bounds = [(0.0, 0.08) for _ in range(N)]
+        
+        # Hard constraint: sum(w) = long_budget
+        constraints = [
+            {'type': 'eq', 'fun': lambda w: np.sum(w) - long_budget}
+        ]
+        
+        # Hard constraint: Sector caps (sum of weights in each sector <= 0.25)
+        sector_groups = {}
+        for idx, tk in enumerate(tickers):
+            sec = self.sector_map.get(tk, 'Unknown')
+            if sec not in sector_groups:
+                sector_groups[sec] = []
+            sector_groups[sec].append(idx)
+            
+        for sec, indices in sector_groups.items():
+            constraints.append({
+                'type': 'ineq',
+                'fun': lambda w, idxs=indices: 0.25 - np.sum(w[idxs])
+            })
+            
+        # Objective function: minimize - w^T mu + (lambda / 2) * w^T cov w + gamma * sum(|w - w_prev|)
+        opt_lambda = getattr(self, 'opt_lambda', 1.0)
+        opt_gamma = getattr(self, 'opt_gamma', 0.005)
+        
+        def objective(w):
+            expected_ret = np.dot(w, mu)
+            risk = 0.5 * opt_lambda * np.dot(w.T, np.dot(cov, w))
+            turnover_cost = opt_gamma * np.sum(np.sqrt((w - prev_w)**2 + 1e-6))
+            return -expected_ret + risk + turnover_cost
+            
+        def jac(w):
+            grad_ret = -mu
+            grad_risk = opt_lambda * np.dot(cov, w)
+            grad_turnover = opt_gamma * (w - prev_w) / np.sqrt((w - prev_w)**2 + 1e-6)
+            return grad_ret + grad_risk + grad_turnover
+            
+        # Initial guess: equal weight summing to long_budget
+        w0 = np.ones(N) * (long_budget / N)
+        
+        # Run optimizer
+        res = sco.minimize(objective, w0, method='SLSQP', bounds=bounds, constraints=constraints, jac=jac, options={'maxiter': 100})
+        
+        if res.success:
+            w_opt = res.x
+        else:
+            w_opt = w0
+            
+        # Format weights dictionary and save previous sleeve tracking
+        opt_weights = {}
+        for idx, tk in enumerate(tickers):
+            w = float(w_opt[idx])
+            if not top_longs.empty and tk in top_longs['ticker'].values:
+                self.previous_momentum_weights[tk] = w
+            else:
+                self.previous_defensive_weights[tk] = w
+            opt_weights[tk] = w
+            
+        return opt_weights
+
     def _write_trade_logs(self, log_df: pd.DataFrame):
         os.makedirs(os.path.dirname(PRIMARY_TRADELOG), exist_ok=True)
         log_df.to_csv(PRIMARY_TRADELOG, index=False)
         print(f'--- SAVED: {PRIMARY_TRADELOG} ---')
 
     def run_simulation(self):
+        self.prepare_simulation()
+        for rebalance_idx in range(self.start_rebalance_idx, self.end_rebalance_idx):
+            self.step_one_week(rebalance_idx)
+        self.finalize_simulation()
+
+    def prepare_simulation(self):
         print('Loading data...')
         self.trade_log = []
         self.weekly_returns = []
         self.regime_trace = []
+        self.previous_weights = {}
+        
+        # Load Sector Mapping
+        self.sector_map = {}
+        import json, os
+        if os.path.exists('chimera_data/sector_map.json'):
+            with open('chimera_data/sector_map.json', 'r') as f:
+                self.sector_map = json.load(f)
         self.prev_regime_probs = None
         self.previous_weights = {}
+        self.previous_momentum_weights = {}
+        self.previous_defensive_weights = {}
 
         data_map = self.load_all_stocks()
         data_map = self.load_indices(data_map)
         broad_key = _resolve_key(data_map, CONFIG['BROAD_TICKER_CANDIDATES'])
         if broad_key is None:
-            print('No calendar data!')
-            return
+            raise ValueError('No calendar data!')
 
         calendar = data_map[broad_key].copy().sort_index()
-        dates = calendar.index
-        rebalance_dates = dates[dates.weekday == 4]
-        if len(rebalance_dates) <= 250:
-            print('Not enough rebalance dates to run simulation.')
-            return
+        self.dates = calendar.index
+        # Get the last available trading day of each week to fix holiday Friday skips
+        rebalance_dates = pd.Series(self.dates, index=self.dates).resample('W-FRI').last().dropna()
+        self.rebalance_dates = pd.DatetimeIndex(rebalance_dates.values).sort_values()
+        if len(self.rebalance_dates) <= 250:
+            raise ValueError('Not enough rebalance dates to run simulation.')
 
-        start_idx = max(CONFIG['MIN_HISTORY'], CONFIG['LOOKBACK_TREND'] + 5)
-        start_rebalance_idx = int(np.searchsorted(rebalance_dates, dates[start_idx], side='left'))
-        if start_rebalance_idx >= len(rebalance_dates) - 1:
-            print('Not enough post-warmup rebalance dates.')
-            return
+        self.start_idx = max(CONFIG['MIN_HISTORY'], CONFIG['LOOKBACK_TREND'] + 5)
+        self.start_rebalance_idx = int(np.searchsorted(self.rebalance_dates, self.dates[self.start_idx], side='left'))
+        if self.start_rebalance_idx >= len(self.rebalance_dates) - 1:
+            raise ValueError('Not enough post-warmup rebalance dates.')
 
-        asset_cache = self._build_asset_cache(data_map, dates)
-        broad, risk, fear, usd, us10y, gold = self._build_market_frame(data_map, dates)
-        self.news_context = self.load_news_context(dates)
+        self.asset_cache = self._build_asset_cache(data_map, self.dates)
+        self.broad, self.risk, self.fear, self.usd, self.us10y, self.gold = self._build_market_frame(data_map, self.dates)
+        self.news_context = self.load_news_context(self.dates)
+        
+        # Precompute daily returns for all stocks in the universe for rolling optimization
+        self.daily_returns_df = pd.DataFrame({
+            tk: data_map[tk]['Close'].pct_change().reindex(self.dates)
+            for tk in data_map if 'Close' in data_map[tk].columns
+        })
         print(f'Calendar: {len(calendar)} rows')
-        print(f'Universe: {len(asset_cache)} stocks')
+        print(f'Universe: {len(self.asset_cache)} stocks')
         print(f'News context: {"loaded" if self.news_context is not None else "not available"}')
 
-        asset_lookup = {a.ticker: a for a in asset_cache}
+        self.asset_lookup = {a.ticker: a for a in self.asset_cache}
 
         # Time-fencing for fast validation on weak laptops:
         test_start = os.environ.get('CHIMERA_TEST_START')
         test_end = os.environ.get('CHIMERA_TEST_END')
         if test_start:
             test_start_dt = pd.to_datetime(test_start)
-            start_rebalance_idx = max(start_rebalance_idx, int(np.searchsorted(rebalance_dates, test_start_dt, side='left')))
+            self.start_rebalance_idx = max(self.start_rebalance_idx, int(np.searchsorted(self.rebalance_dates, test_start_dt, side='left')))
             print(f'Test start overridden: {test_start}')
 
-        end_rebalance_idx = len(rebalance_dates) - 1
+        self.end_rebalance_idx = len(self.rebalance_dates) - 1
         if test_end:
             test_end_dt = pd.to_datetime(test_end)
-            end_rebalance_idx = min(end_rebalance_idx, int(np.searchsorted(rebalance_dates, test_end_dt, side='left')))
+            self.end_rebalance_idx = min(self.end_rebalance_idx, int(np.searchsorted(self.rebalance_dates, test_end_dt, side='left')))
             print(f'Test end overridden: {test_end}')
 
-        for rebalance_idx in range(start_rebalance_idx, end_rebalance_idx):
+    def step_one_week(self, rebalance_idx):
+        dates = self.dates
+        rebalance_dates = self.rebalance_dates
+        asset_cache = self.asset_cache
+        broad = self.broad
+        risk = self.risk
+        fear = self.fear
+        usd = self.usd
+        us10y = self.us10y
+        gold = self.gold
+        start_rebalance_idx = self.start_rebalance_idx
+        end_rebalance_idx = self.end_rebalance_idx
+        asset_lookup = self.asset_lookup
+        
+        if True:
             current_date = rebalance_dates[rebalance_idx]
             next_date = rebalance_dates[rebalance_idx + 1]
+            if (rebalance_idx - start_rebalance_idx) % 50 == 0 or rebalance_idx == end_rebalance_idx - 1:
+                total_steps = end_rebalance_idx - start_rebalance_idx
+                print(f"  Step {rebalance_idx - start_rebalance_idx}/{total_steps} ({current_date.strftime('%Y-%m-%d')})")
             current_idx = int(dates.get_loc(current_date))
             next_idx = int(dates.get_loc(next_date))
             signal_idx = current_idx - 1
             if signal_idx < 0:
-                continue
+                return
 
             breadth_vals = [a.above200[signal_idx] for a in asset_cache if np.isfinite(a.above200[signal_idx])]
             breadth = float(np.nanmean(breadth_vals)) if breadth_vals else np.nan
@@ -648,7 +934,7 @@ class ChimeraEngineNormal:
                     'mom_z': np.nan, 'break_score': np.nan, 'news_bias': news_bias, 'suppression_score': suppression_score,
                     'p_bull': p_bull, 'p_chop': p_chop, 'p_bear': p_bear, 'transition_risk': transition_risk,
                 })
-                continue
+                return
 
             # LONG POOL: positive 60-day momentum + above median score + not crashing short-term
             long_pool = scored[
@@ -672,7 +958,38 @@ class ChimeraEngineNormal:
                 short_pool = pd.DataFrame()
                 long_pool = long_pool.head(max(5, CONFIG['LONG_NAMES'] // 2)).copy()
 
-            top_longs = long_pool.head(CONFIG['LONG_NAMES']).copy()
+            # Defensive Quality / Low-Vol Sleeve pool
+            defensive_pool = scored[
+                (scored['vol252'].notna()) &
+                (scored['max_dd'].notna()) &
+                (scored['r2'].notna())
+            ].copy()
+            defensive_pool = defensive_pool.sort_values('defensive_score', ascending=False)
+
+            # Rank 30 Hysteresis Buffer for Momentum
+            hysteresis_candidates = long_pool.head(30)
+            held_mom_tickers = set(self.previous_momentum_weights.keys())
+            kept_longs = hysteresis_candidates[hysteresis_candidates['ticker'].isin(held_mom_tickers)]
+            new_slots = CONFIG['LONG_NAMES'] - len(kept_longs)
+            if new_slots > 0:
+                new_longs = long_pool[~long_pool['ticker'].isin(held_mom_tickers)].head(new_slots)
+                top_longs = pd.concat([kept_longs, new_longs]).sort_values('long_score', ascending=False)
+            else:
+                top_longs = kept_longs.head(CONFIG['LONG_NAMES']).sort_values('long_score', ascending=False)
+            top_longs = top_longs.copy()
+
+            # Rank 30 Hysteresis Buffer for Defensive
+            defensive_candidates = defensive_pool.head(30)
+            held_def_tickers = set(self.previous_defensive_weights.keys())
+            kept_def = defensive_candidates[defensive_candidates['ticker'].isin(held_def_tickers)]
+            new_def_slots = CONFIG['LONG_NAMES'] - len(kept_def)
+            if new_def_slots > 0:
+                new_def = defensive_pool[~defensive_pool['ticker'].isin(held_def_tickers)].head(new_def_slots)
+                top_defensive = pd.concat([kept_def, new_def]).sort_values('defensive_score', ascending=False)
+            else:
+                top_defensive = kept_def.head(CONFIG['LONG_NAMES']).sort_values('defensive_score', ascending=False)
+            top_defensive = top_defensive.copy()
+
             if not top_longs.empty and not short_pool.empty:
                 short_pool = short_pool[~short_pool['ticker'].isin(top_longs['ticker'])]
             top_shorts = short_pool.head(CONFIG['SHORT_NAMES']).copy()
@@ -691,60 +1008,267 @@ class ChimeraEngineNormal:
                     'mom_z': np.nan, 'break_score': np.nan, 'news_bias': news_bias, 'suppression_score': suppression_score,
                     'p_bull': p_bull, 'p_chop': p_chop, 'p_bear': p_bear, 'transition_risk': transition_risk,
                 })
-                continue
+                return
 
             self.current_macro_state = {
                 'regime_confidence': confidence, 'p_bull': p_bull, 'p_chop': p_chop, 'p_bear': p_bear,
                 'transition_risk': transition_risk, 'breadth': breadth, 'vix': vix, 'macro_score': macro_score,
                 'news_bias': news_bias, 'suppression_score': suppression_score
             }
-            long_budget, short_budget = self._allocate_gross_budget(regime, len(top_longs), len(top_shorts), confidence)
-            # Threshold-based scaling (v2 original — proven in walk-forward):
-            # Continuous scaling (max(0.30, 1.0 - transition_risk)) was REJECTED:
-            # it silently cut 20-40% of BULL exposure, costing ~89% total return.
-            if transition_risk >= 0.60:
-                long_budget *= max(0.40, 1.0 - 0.60 * transition_risk)
-                short_budget *= max(0.25, 1.0 - 0.80 * transition_risk)
-            # Cap short budget — never more than 30% of long budget
-            if short_budget > long_budget * 0.30:
-                short_budget = long_budget * 0.30
-
-            if not top_longs.empty:
-                long_raw = (top_longs['long_score'] - top_longs['long_score'].min() + 1e-6).clip(lower=1e-6)
-                long_raw = long_raw / long_raw.sum()
-                inv_vol = 1.0 / top_longs['vol20'].replace(0, np.nan).fillna(top_longs['vol20'].median())
-                inv_vol = inv_vol / inv_vol.sum()
-                long_raw = 0.60 * long_raw + 0.40 * inv_vol
-                long_raw = long_raw / long_raw.sum()
+            if hasattr(self, 'rl_actions') and 'equity_exposure' in self.rl_actions:
+                long_budget = self.rl_actions['equity_exposure']
+                short_budget = 0.0
             else:
-                long_raw = pd.Series(dtype=float)
-
-            if not top_shorts.empty:
-                short_raw = (top_shorts['short_score'] - top_shorts['short_score'].min() + 1e-6).clip(lower=1e-6)
-                short_raw = short_raw / short_raw.sum()
-                inv_vol = 1.0 / top_shorts['vol20'].replace(0, np.nan).fillna(top_shorts['vol20'].median())
-                inv_vol = inv_vol / inv_vol.sum()
-                short_raw = 0.55 * short_raw + 0.45 * inv_vol
-                short_raw = short_raw / short_raw.sum()
+                long_budget, short_budget = self._allocate_gross_budget(regime, len(top_longs), len(top_shorts), confidence)
+            
+            gold_model = CONFIG.get('GOLD_MODEL', 'baseline')
+            if gold_model == 'no_gold':
+                long_budget = 1.0
+                short_budget = 0.0
             else:
-                short_raw = pd.Series(dtype=float)
+                if transition_risk >= 0.60:
+                    long_budget *= max(0.40, 1.0 - 0.60 * transition_risk)
+                    short_budget *= max(0.25, 1.0 - 0.80 * transition_risk)
+                if short_budget > long_budget * 0.30:
+                    short_budget = long_budget * 0.30
 
             final_weights = {}
-            MAX_SINGLE_WEIGHT = 0.10  # Hard cap: no single stock > 10% of capital
-            for i, (_, row) in enumerate(top_longs.iterrows()):
-                base_w = float(long_budget * long_raw.iloc[i]) if len(long_raw) else 0.0
-                w = base_w * (0.75 if np.isfinite(vix) and vix > 24 else 1.0)
-                if row['structure'] == 'VACUUM' and row['fip'] > 0:
-                    w *= 1.10
-                w = min(w, MAX_SINGLE_WEIGHT)
-                final_weights[row['ticker']] = {'side': 'LONG', 'weight': w, 'base_weight': base_w, 'score': float(row['long_score']), 'row': row}
-            for i, (_, row) in enumerate(top_shorts.iterrows()):
-                base_w = float(short_budget * short_raw.iloc[i]) if len(short_raw) else 0.0
-                w = base_w * (0.85 if np.isfinite(vix) and vix > 24 else 1.0)
-                if row['structure'] == 'TRAPPED' and np.isfinite(row['mom60']) and row['mom60'] < 0:
-                    w *= 1.10
-                w = min(w, MAX_SINGLE_WEIGHT)
-                final_weights[row['ticker']] = {'side': 'SHORT', 'weight': -w, 'base_weight': base_w, 'score': float(row['short_score']), 'row': row}
+            MAX_SINGLE_WEIGHT = 0.10
+            
+            # Reset previous sleeve tracking
+            self.previous_momentum_weights = {}
+            self.previous_defensive_weights = {}
+
+            if CONFIG.get('USE_MVO', False):
+                opt_weights = self._optimize_portfolio_weights(top_longs, top_defensive, long_budget, p_bear, current_idx)
+                for tk, w in opt_weights.items():
+                    if w > 0.001:
+                        row = None
+                        score = 0.0
+                        sleeve = 'MOMENTUM'
+                        if not top_longs.empty and tk in top_longs['ticker'].values:
+                            row = top_longs[top_longs['ticker'] == tk].iloc[0]
+                            score = float(row['long_score'])
+                        elif not top_defensive.empty and tk in top_defensive['ticker'].values:
+                            row = top_defensive[top_defensive['ticker'] == tk].iloc[0]
+                            score = float(row['defensive_score'])
+                            sleeve = 'DEFENSIVE'
+                        
+                        if row is not None:
+                            w_scaled = w * (0.75 if np.isfinite(vix) and vix > 24 else 1.0)
+                            w_scaled = min(w_scaled, MAX_SINGLE_WEIGHT)
+                            final_weights[tk] = {
+                                'side': 'LONG', 'weight': w_scaled, 'base_weight': w,
+                                'score': score, 'row': row, 'sleeve': sleeve
+                            }
+                # Also handle shorts under MVO if active
+                if not top_shorts.empty:
+                    short_raw = (top_shorts['short_score'] - top_shorts['short_score'].min() + 1e-6).clip(lower=1e-6)
+                    short_raw = short_raw / short_raw.sum()
+                    inv_vol = 1.0 / top_shorts['vol20'].replace(0, np.nan).fillna(top_shorts['vol20'].median())
+                    inv_vol = inv_vol / inv_vol.sum()
+                    short_raw = 0.55 * short_raw + 0.45 * inv_vol
+                    short_raw = short_raw / short_raw.sum()
+                    
+                    max_w = 0.08 / max(1e-5, float(short_budget))
+                    for _ in range(5):
+                        if short_raw.max() <= max_w + 1e-4: break
+                        short_raw = short_raw.clip(upper=max_w)
+                        short_raw = short_raw / short_raw.sum()
+                        
+                    for i, (_, row) in enumerate(top_shorts.iterrows()):
+                        base_w = float(short_budget * short_raw.iloc[i]) if len(short_raw) else 0.0
+                        w = base_w * (0.85 if np.isfinite(vix) and vix > 24 else 1.0)
+                        w = min(w, MAX_SINGLE_WEIGHT)
+                        final_weights[row['ticker']] = {
+                            'side': 'SHORT', 'weight': -w, 'base_weight': base_w,
+                            'score': float(row['short_score']), 'row': row, 'sleeve': 'SHORT'
+                        }
+            else:
+                # Momentum Sleeve Weight Scaling
+                if not top_longs.empty:
+                    long_raw = (top_longs['long_score'] - top_longs['long_score'].min() + 1e-6).clip(lower=1e-6)
+                    long_raw = long_raw / long_raw.sum()
+                    inv_vol = 1.0 / top_longs['vol20'].replace(0, np.nan).fillna(top_longs['vol20'].median())
+                    inv_vol = inv_vol / inv_vol.sum()
+                    long_raw = 0.60 * long_raw + 0.40 * inv_vol
+                    long_raw = long_raw / long_raw.sum()
+                    
+                    # Recursive clipping: 8% stock cap & 25% sector cap (applied on momentum sleeve budget)
+                    sleeve_split = 0.80  # heuristic default; RL controls higher-level levers
+                    mom_budget = long_budget * sleeve_split
+                    for _ in range(5):
+                        max_w = 0.08 / max(1e-5, float(mom_budget))
+                        if long_raw.max() > max_w + 1e-4:
+                            long_raw = long_raw.clip(upper=max_w)
+                            long_raw = long_raw / long_raw.sum()
+                            
+                        sector_cap = 0.25 / max(1e-5, float(mom_budget))
+                        sec_weights = {}
+                        for i, (idx, row) in enumerate(top_longs.iterrows()):
+                            sec = self.sector_map.get(row['ticker'], 'Unknown')
+                            sec_weights[sec] = sec_weights.get(sec, 0.0) + long_raw.iloc[i]
+                            
+                        breached = {s: w for s, w in sec_weights.items() if w > sector_cap + 1e-4}
+                        if not breached and long_raw.max() <= max_w + 1e-4:
+                            break
+                            
+                        if breached:
+                            for i, (idx, row) in enumerate(top_longs.iterrows()):
+                                sec = self.sector_map.get(row['ticker'], 'Unknown')
+                                if sec in breached:
+                                    long_raw.iloc[i] *= (sector_cap / breached[sec])
+                            long_raw = long_raw / long_raw.sum()
+                else:
+                    long_raw = pd.Series(dtype=float)
+
+                # Defensive Sleeve Weight Scaling
+                if not top_defensive.empty:
+                    def_raw = (top_defensive['defensive_score'] - top_defensive['defensive_score'].min() + 1e-6).clip(lower=1e-6)
+                    def_raw = def_raw / def_raw.sum()
+                    inv_vol_def = 1.0 / top_defensive['vol20'].replace(0, np.nan).fillna(top_defensive['vol20'].median())
+                    inv_vol_def = inv_vol_def / inv_vol_def.sum()
+                    def_raw = 0.60 * def_raw + 0.40 * inv_vol_def
+                    def_raw = def_raw / def_raw.sum()
+                    
+                    # Recursive clipping: 8% stock cap & 25% sector cap (applied on defensive sleeve budget)
+                    sleeve_split = 0.80  # heuristic default; RL controls higher-level levers
+                    def_budget = long_budget * (1.0 - sleeve_split)
+                    for _ in range(5):
+                        max_w = 0.08 / max(1e-5, float(def_budget))
+                        if def_raw.max() > max_w + 1e-4:
+                            def_raw = def_raw.clip(upper=max_w)
+                            def_raw = def_raw / def_raw.sum()
+                            
+                        sector_cap = 0.25 / max(1e-5, float(def_budget))
+                        sec_weights = {}
+                        for i, (idx, row) in enumerate(top_defensive.iterrows()):
+                            sec = self.sector_map.get(row['ticker'], 'Unknown')
+                            sec_weights[sec] = sec_weights.get(sec, 0.0) + def_raw.iloc[i]
+                            
+                        breached = {s: w for s, w in sec_weights.items() if w > sector_cap + 1e-4}
+                        if not breached and def_raw.max() <= max_w + 1e-4:
+                            break
+                            
+                        if breached:
+                            for i, (idx, row) in enumerate(top_defensive.iterrows()):
+                                sec = self.sector_map.get(row['ticker'], 'Unknown')
+                                if sec in breached:
+                                    def_raw.iloc[i] *= (sector_cap / breached[sec])
+                            def_raw = def_raw / def_raw.sum()
+                else:
+                    def_raw = pd.Series(dtype=float)
+
+                # Shorts weight scaling
+                if not top_shorts.empty:
+                    short_raw = (top_shorts['short_score'] - top_shorts['short_score'].min() + 1e-6).clip(lower=1e-6)
+                    short_raw = short_raw / short_raw.sum()
+                    inv_vol = 1.0 / top_shorts['vol20'].replace(0, np.nan).fillna(top_shorts['vol20'].median())
+                    inv_vol = inv_vol / inv_vol.sum()
+                    short_raw = 0.55 * short_raw + 0.45 * inv_vol
+                    short_raw = short_raw / short_raw.sum()
+                    
+                    max_w = 0.08 / max(1e-5, float(short_budget))
+                    for _ in range(5):
+                        if short_raw.max() <= max_w + 1e-4: break
+                        short_raw = short_raw.clip(upper=max_w)
+                        short_raw = short_raw / short_raw.sum()
+                else:
+                    short_raw = pd.Series(dtype=float)
+
+                # Populate Momentum positions
+                if not top_longs.empty:
+                    mom_budget = long_budget * 0.80
+                    for i, (_, row) in enumerate(top_longs.iterrows()):
+                        base_w = float(mom_budget * long_raw.iloc[i]) if len(long_raw) else 0.0
+                        w = base_w * (0.75 if np.isfinite(vix) and vix > 24 else 1.0)
+                        if row['structure'] == 'VACUUM' and row['fip'] > 0:
+                            w *= 1.10
+                        w = min(w, MAX_SINGLE_WEIGHT)
+                        self.previous_momentum_weights[row['ticker']] = w
+                        
+                        final_weights[row['ticker']] = {
+                            'side': 'LONG', 'weight': w, 'base_weight': base_w, 
+                            'score': float(row['long_score']), 'row': row, 'sleeve': 'MOMENTUM'
+                        }
+
+                # Populate Defensive positions
+                if not top_defensive.empty:
+                    def_budget = long_budget * 0.20
+                    for i, (_, row) in enumerate(top_defensive.iterrows()):
+                        base_w = float(def_budget * def_raw.iloc[i]) if len(def_raw) else 0.0
+                        w = base_w * (0.75 if np.isfinite(vix) and vix > 24 else 1.0)
+                        w = min(w, MAX_SINGLE_WEIGHT)
+                        self.previous_defensive_weights[row['ticker']] = w
+                        
+                        if row['ticker'] not in final_weights:
+                            final_weights[row['ticker']] = {
+                                'side': 'LONG', 'weight': 0.0, 'base_weight': 0.0, 
+                                'score': float(row['defensive_score']), 'row': row, 'sleeve': 'DEFENSIVE'
+                            }
+                        final_weights[row['ticker']]['weight'] += w
+                        final_weights[row['ticker']]['base_weight'] += base_w
+
+                # Populate Shorts
+                for i, (_, row) in enumerate(top_shorts.iterrows()):
+                    base_w = float(short_budget * short_raw.iloc[i]) if len(short_raw) else 0.0
+                    w = base_w * (0.85 if np.isfinite(vix) and vix > 24 else 1.0)
+                    if row['structure'] == 'TRAPPED' and np.isfinite(row['mom60']) and row['mom60'] < 0:
+                        w *= 1.10
+                    w = min(w, MAX_SINGLE_WEIGHT)
+                    final_weights[row['ticker']] = {
+                        'side': 'SHORT', 'weight': -w, 'base_weight': base_w, 
+                        'score': float(row['short_score']), 'row': row, 'sleeve': 'SHORT'
+                    }
+
+            # Populate Dynamic Gold Sleeve
+            if hasattr(self, 'rl_actions') and 'gold_weight' in self.rl_actions:
+                gold_weight = self.rl_actions['gold_weight']
+            else:
+                gold_model = CONFIG.get('GOLD_MODEL', 'baseline')
+                if gold_model == 'no_gold':
+                    gold_weight = 0.0
+                elif gold_model == 'capped':
+                    gold_weight = min((1.0 - long_budget) * p_bear, 0.20)
+                elif gold_model == 'sigmoid':
+                    gold_weight = 0.35 / (1.0 + np.exp(-4.0 * (p_bear - 0.5)))
+                else:
+                    gold_weight = (1.0 - long_budget) * p_bear
+                    
+                # Explicit Policy Limit: Cap defensive ETF allocation at 25% portfolio weight
+                gold_weight = min(gold_weight, 0.25)
+                
+            if gold_weight > 0.005:
+                gold_row = pd.Series({
+                    'ticker': 'GOLDBEES',
+                    'close': float(gold['Close'].iloc[current_idx]) if gold is not None and current_idx < len(gold) else 1.0,
+                    'open_price': float(gold['Open'].iloc[current_idx]) if gold is not None and current_idx < len(gold) else 1.0,
+                    'structure': 'NONE',
+                    'fip': 0.0,
+                    'long_score': 0.0
+                })
+                final_weights['GOLDBEES'] = {
+                    'side': 'GOLD',
+                    'weight': gold_weight,
+                    'base_weight': gold_weight,
+                    'score': 0.0,
+                    'row': gold_row,
+                    'sleeve': 'GOLD'
+                }
+
+            # Post-Aggregation Portfolio-Level Sector Capping (25% Cap across combined book)
+            sec_sums = {}
+            for tk, item in final_weights.items():
+                if item['side'] != 'GOLD':
+                    sec = self.sector_map.get(tk, 'Unknown')
+                    sec_sums[sec] = sec_sums.get(sec, 0.0) + abs(item['weight'])
+
+            for sec, tot_w in sec_sums.items():
+                if tot_w > 0.25:
+                    scale_sec = 0.25 / tot_w
+                    for tk, item in final_weights.items():
+                        if item['side'] != 'GOLD' and self.sector_map.get(tk, 'Unknown') == sec:
+                            item['weight'] *= scale_sec
 
             total_gross = float(sum(abs(v['weight']) for v in final_weights.values()))
             if total_gross > CONFIG['MAX_LEVERAGE'] and total_gross > 0:
@@ -765,9 +1289,14 @@ class ChimeraEngineNormal:
             date_pnl -= friction_cost
 
             for ticker, item in final_weights.items():
-                asset = asset_lookup[ticker]
-                entry_open = asset.open[current_idx] if current_idx < len(asset.open) else np.nan
-                exit_open = asset.open[next_idx] if next_idx < len(asset.open) else np.nan
+                if ticker == 'GOLDBEES':
+                    entry_open = float(gold['Open'].iloc[current_idx]) if gold is not None and current_idx < len(gold['Open']) else np.nan
+                    exit_open = float(gold['Open'].iloc[next_idx]) if gold is not None and next_idx < len(gold['Open']) else np.nan
+                else:
+                    asset = asset_lookup[ticker]
+                    entry_open = asset.open[current_idx] if current_idx < len(asset.open) else np.nan
+                    exit_open = asset.open[next_idx] if next_idx < len(asset.open) else np.nan
+                
                 if not np.isfinite(entry_open) or not np.isfinite(exit_open) or entry_open <= 0:
                     raw_ret = 0.0
                     entry_open = float(item['row']['open_price'])
@@ -799,6 +1328,7 @@ class ChimeraEngineNormal:
                     'net_pnl': float(net_pnl),
                     'structure_tag': item['row']['structure'],
                     'side': item['side'],
+                    'sleeve': item.get('sleeve', 'SHORT'),
                     'score': float(item['score']),
                     'long_score': float(item['score']) if item['side'] == 'LONG' else np.nan,
                     'short_score': float(item['score']) if item['side'] == 'SHORT' else np.nan,
@@ -810,7 +1340,7 @@ class ChimeraEngineNormal:
                     'p_chop': p_chop,
                     'p_bear': p_bear,
                     'transition_risk': transition_risk,
-                    'mom_z': float(row['mom60_z']) if pd.notna(row['mom60_z']) else np.nan,
+                    'mom_z': float(row['mom60_z']) if ('mom60_z' in row and pd.notna(row['mom60_z'])) else np.nan,
                     'break_score': np.nan,
                 })
 
@@ -837,6 +1367,7 @@ class ChimeraEngineNormal:
             # Save weights for next step
             self.previous_weights = {t: item['weight'] for t, item in final_weights.items()}
 
+    def finalize_simulation(self):
         if not self.trade_log:
             print('No trades generated.')
             return

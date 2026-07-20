@@ -15,7 +15,7 @@ def train_baseline_xgb():
     df['year'] = df['date'].dt.year
     
     # Drop NaNs
-    features = ['fip_z', 'mom20_z', 'mom60_z', 'vol20_z', 'beta', 'rsi14', 'structure_score']
+    features = ['fip_z', 'mom20_z', 'mom60_z', 'vol20_z', 'beta', 'rsi14', 'structure_score', 'rvol20', 'vol_comp']
     df = df.dropna(subset=features + ['target_fwd_ret'])
     
     # Optional: Clip extreme returns to avoid training on massive gap outliers

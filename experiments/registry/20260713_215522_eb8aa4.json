@@ -1,0 +1,21 @@
+{
+    "experiment_id": "20260713_215522_eb8aa4",
+    "name": "EXP_002E",
+    "timestamp": "2026-07-13T16:25:22.300438",
+    "kernel_version": "1.0.0",
+    "dataset_version": "sine_wave_v1",
+    "scenario_version": "default",
+    "model_version": "v1",
+    "random_seed": 42,
+    "config_hash": "7ebd9c4c9126687754eccedf7e8a5d0a5ed54f47804fb75aaec33c7e41833a60",
+    "config": {
+        "policy": "LSTM",
+        "obs": "12_week_stack",
+        "total_timesteps": 50000
+    },
+    "metrics": {
+        "mean_reward": 0.00025935970353262633,
+        "sharpe": 3.0911423736953623
+    },
+    "status": "COMPLETED"
+}

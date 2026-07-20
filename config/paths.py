@@ -24,3 +24,4 @@ DEXTER_AUDIT_DIR = NEWS_DATA_DIR / 'dexter'
 PRIMARY_TRADELOG = OUTPUT_DATA_DIR / 'tradelog_chimera_fip.csv'
 REGIME_TRACE_PATH = OUTPUT_DATA_DIR / 'regime_trace_chimera_fip.csv'
 WEEKLY_TRACE_PATH = OUTPUT_DATA_DIR / 'weekly_returns_chimera_fip.csv'
+

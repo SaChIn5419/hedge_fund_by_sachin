@@ -1,0 +1,175 @@
+[
+  {
+    "experiment_id": "Exp_12",
+    "title": "AUM Capacity Decay Bounds",
+    "status": "Established",
+    "evidence_tier": "Level 4",
+    "competing_hypotheses": [
+      "H1: Strategy capacity scales linearly beyond 10Cr without return decay.",
+      "H2: Strategy capacity decays nonlinearly under square-root market impact, bounding size between 5Cr and 10Cr."
+    ],
+    "winning_hypothesis": "H2",
+    "evidence_evaluation": "Mean-Variance Optimization backtests at varying capital scales show CAGR decays from 26.76% at 1Cr to 13.67% at 10Cr, and turns negative (-6.82%) at 50Cr. This confirms nonlinear capacity bounds (H2).",
+    "acceptance_criteria": "CAGR drops below 15% and Sharpe below 0.80 at a capital scale below 50Cr.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "locked-champion-v2",
+    "threats_to_validity": "Slippage model assumes continuous liquidity matching ADV, which may deteriorate during high-volatility market crashes.",
+    "known_limitations": "Does not model intraday price execution paths; weekly rebalancing impact is treated as a single block trade at close."
+  },
+  {
+    "experiment_id": "Exp_9A",
+    "title": "Market State Space Measurement & Unsupervised Clustering",
+    "status": "Established",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H1: The market operates on a continuous, unstructured return manifold without discrete cluster properties.",
+      "H2: The market partitions into distinct, identifiable structural states (e.g. S0-S4) driven by geometry and dispersion."
+    ],
+    "winning_hypothesis": "H2",
+    "evidence_evaluation": "GMM BIC curves show a clear elbow point minimizing at K=5, and K-Means silhouette scores maximize at K=3 (silhouette 0.3166 on 6 scaled features, 0.2692 on 8 scaled features vs 0.2400 for K=5). This confirms discrete state approximations describe the manifold better than the unstructured null (H2). Downstream pipeline re-runs prove S0 merges into broader states at K=3.",
+    "acceptance_criteria": "BIC/AIC curves show a clear elbow point, and the silhouette score for the optimal cluster size exceeds 0.20.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "info-lab-v2",
+    "threats_to_validity": "High-dimensional clustering can suffer from the curse of dimensionality; features must remain heavily regularized and scaled.",
+    "known_limitations": "Lookback window for daily returns correlation is fixed at 60 days; different windows may shift cluster boundaries. Semantic labels are tentative until cross-market replication is complete."
+  },
+  {
+    "experiment_id": "Exp_9B",
+    "title": "Clustering Stability & Transition Dynamics",
+    "status": "Replicated",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H1: Discovered state assignments are unstable and highly sensitive to dataset and feature perturbations.",
+      "H2: Discovered state assignments are moderately stable under subsampling, and S0 outperformance is not dominated by outlier weeks."
+    ],
+    "winning_hypothesis": "H2",
+    "evidence_evaluation": "Subsampling bootstrap ARI is 0.4656 (median 0.5029), showing moderate stability under resampling. Leave-one-out Sharpe range for S0 is tight [4.937, 5.937] within the In-Sample discovery period (2019-2022). However, per Neg_004, chronological auditing reveals 0 S0 weeks occurred out-of-sample (2023-2026), bounding S0 alpha strictly to In-Sample discovery (H2).",
+    "acceptance_criteria": "Mean subsampling bootstrap ARI exceeds 0.40, and the Alpha Rich state bootstrap Sharpe lower bound (95% CI) exceeds 2.0.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "info-lab-v2",
+    "threats_to_validity": "Small sample size (N=23 weeks) for S0 limits asymptotic assumptions; bootstrap and LOO validation mitigate within-sample variance but do not guarantee out-of-sample generalization.",
+    "known_limitations": "Transition dynamics are modeled as first-order Markovian; higher-order memory effects in state transitions are not accounted for."
+  },
+  {
+    "experiment_id": "Exp_10A",
+    "title": "Critical Slowing Down & Duration Dependence",
+    "status": "Established",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H1: States are memoryless (first-order Markov) with constant exit probabilities.",
+      "H2: States exhibit duration dependence (semi-Markov) with non-constant hazard rates.",
+      "H3: Pre-transition weeks into S0 are preceded by significant spikes in rolling lag-1 autocorrelation (CSD)."
+    ],
+    "winning_hypothesis": "H2",
+    "evidence_evaluation": "Model selection proves Log-Normal distribution minimizes AIC across all 5 states (e.g. S2 AIC is 131.7 vs Exponential 145.0), establishing non-Markovian duration dependence (H2). CSD lag-1 AR spikes are not statistically significant (p = 0.859), rejecting H3.",
+    "acceptance_criteria": "Pre-transition lag-1 autocorrelation and variance t-stats are positive (p < 0.05) and Weibull shape parameter beta != 1.0 (duration dependence exists).",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "info-dynamics-v1",
+    "threats_to_validity": "Small sample of S0 transitions limits statistical power for pre-transition CSD t-tests.",
+    "known_limitations": "CSD indicators assume smooth bifurcations; duration models assume stationary parameters over the 2019-2026 window."
+  },
+  {
+    "experiment_id": "Exp_11A",
+    "title": "Predictive Gating & Cross-Market Replication",
+    "status": "Established",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H1: The 5-state partition is a local artifact of the full Indian index and does not generalize to sector sub-universes.",
+      "H2: The 5-state geometry and transition dynamics generalize to sector-level sub-universes (Financials, Healthcare, Tech)."
+    ],
+    "winning_hypothesis": "H2",
+    "evidence_evaluation": "Replication on Financials (97 stocks, K=6) and Healthcare (51 stocks, K=5) shows S0-equivalent high-dispersion states are rare transient anomalies (2.35% and 2.52% OOS). Technology (41 stocks, K=3) showed 31.76% OOS high-dispersion weeks, which collapses to 4.71% under K=5, confirming K=3 coarseness caused artificial cluster inflation (H2).",
+    "acceptance_criteria": "OOS predictive ROC-AUC exceeds 0.60, and GMM BIC on external markets yields K=5 (or K=3) optimal states.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "info-replication-v1",
+    "threats_to_validity": "Intra-sector correlations are higher than market-wide correlations, which scales down effective breadth numbers.",
+    "known_limitations": "Does not model inter-sector transition synchronization; sectors are treated as independent closed universes."
+  },
+  {
+    "experiment_id": "Exp_12A",
+    "title": "Continuous Geometry & S0 Gating Prediction",
+    "status": "Replicated",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H1: Market geometry and S0 transitions are unforecastable out-of-sample using lagged geometry features (random walk).",
+      "H2: Lagged geometry features contain out-of-sample predictive power for continuous coordinates and S0 transitions."
+    ],
+    "winning_hypothesis": "H1",
+    "evidence_evaluation": "Per Neg_003 and Neg_005, binary S0 transition probability is unforecastable (Val BSS = -2.44, Test BSS = -2.55). For effective breadth, Naive AR(1) persistence (pred(t+1)=B(t)) achieves higher out-of-sample R2 (Val 0.8798, Test 0.9290) than ElasticNet (Val 0.8527, Test 0.9047). High R2 is driven by autocorrelation, confirming H1.",
+    "acceptance_criteria": "OOS predictive ROC-AUC exceeds 0.60, and continuous geometry R2 > 0.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "info-prediction-v1",
+    "threats_to_validity": "Severe class imbalance (under 3% in OOS windows) degrades classification stability.",
+    "known_limitations": "Linear models cannot capture complex, non-linear coordinate interaction thresholds."
+  },
+  {
+    "experiment_id": "Exp_12B",
+    "title": "Multi-Strategy Continuous Geometry Control Loop",
+    "status": "Replicated",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H1: Downstream portfolio tracking error and Sharpe stability are optimized only by hard, binary state switches.",
+      "H2: Continuous geometry coordinates act as a smooth risk dial, reducing drawdowns vs un-gated strategy."
+    ],
+    "winning_hypothesis": "H2",
+    "evidence_evaluation": "Per Neg_006, continuous geometry scaling (kappa) reduces drawdowns vs 100% unlevered exposure. However, benchmark comparison proves a constant exposure control (kappa_bar = 0.76/0.83) achieves smaller Max Drawdowns (-8.73% Val, -10.84% Test) than Dynamic kappa (-9.12% Val, -11.80% Test). Paired t-tests show weekly return differences are statistically insignificant (p = 0.25 Val, p = 0.94 Test). Dynamic kappa functions primarily as average de-leveraging rather than an information-driven risk valve.",
+    "acceptance_criteria": "Gated strategy Sharpe exceeds raw strategy Sharpe, and Max Drawdown is reduced in out-of-sample periods across multiple alpha engines.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "info-control-v2",
+    "threats_to_validity": "The linear weighting parameters of the transfer function may vary over longer macro cycles.",
+    "known_limitations": "Does not account for execution slippage of continuous portfolio resizing (assumed covered by MVO transaction cost penalty)."
+  },
+  {
+    "experiment_id": "Exp_13A",
+    "title": "End-to-End Production Pipeline & Offline Audit",
+    "status": "Established",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H0: Dynamic kappa forecasting provides no statistically significant return benefit over constant exposure (kappa_bar = 0.7731) and yields larger maximum drawdowns.",
+      "H1: Dynamic kappa forecasting provides a statistically significant weekly return edge over constant exposure equal to its average.",
+      "H2: Dynamic risk budgeting provides tighter drawdown control than static 100% allocation."
+    ],
+    "winning_hypothesis": "H0",
+    "evidence_evaluation": "Audited validation proves H0 is the winning hypothesis: weekly return differences between Dynamic kappa and Constant kappa are statistically insignificant (p = 0.2514 Validation, p = 0.9439 Frozen Test), and Constant kappa achieves a smaller Max Drawdown (-8.73% vs -9.12% Val, -10.84% vs -11.80% Test). Dynamic kappa achieves a directional cumulative return edge (+94.81% vs +82.59% in validation) due to single-path compounding, but lacks statistical significance.",
+    "acceptance_criteria": "Out-of-sample Max Drawdown is reduced compared to static 100% allocation, block-bootstrap sanity check L=N recovers exact path, and rebalance rows are logged cleanly to data/geometry_log.csv.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "production-audit-final-v3",
+    "threats_to_validity": "Execution slippage assumes standard MVO cost penalty curves.",
+    "known_limitations": "Real-time daily intraday order routing is not modeled (weekly block rebalancing)."
+  },
+  {
+    "experiment_id": "Exp_14A",
+    "title": "Live-Integrated Exposure Mode Comparison",
+    "status": "Established",
+    "evidence_tier": "Level 3",
+    "competing_hypotheses": [
+      "H0: In-engine dynamic geometry exposure scaling (DYNAMIC_GEOMETRY) provides no Sharpe advantage and incurs a statistically significant drawdown penalty due to turnover/rebalancing whipsaw compared to constant de-leveraging (CONSTANT_DELEVERAGE) or rule-based regime bands (REGIME_BANDS).",
+      "H1: In-engine dynamic geometry exposure scaling improves out-of-sample Sharpe and reduces maximum drawdown compared to rule-based regime bands or constant de-leveraging."
+    ],
+    "winning_hypothesis": "H0",
+    "evidence_evaluation": "Live-integrated backtesting in engine/signal.py (2023-2026 OOS) proves H0 is the winning hypothesis: DYNAMIC_GEOMETRY incurs the worst realized Max Drawdown (-21.23% vs -14.39% for REGIME_BANDS and -15.67% for CONSTANT_DELEVERAGE). Block bootstrap auditing (1,000 resamples) confirms DYNAMIC_GEOMETRY suffers a 100% statistically robust drawdown penalty (mean -20.78% vs -16.60% for constant exposure, p=1.000). Paired t-test shows weekly return differences between REGIME_BANDS and CONSTANT_DELEVERAGE are statistically insignificant (p = 0.2254).",
+    "acceptance_criteria": "Live-integrated in-engine backtest measures Sharpe, Max Drawdown, and 1,000-resample block bootstrap drawdown distributions across all exposure modes.",
+    "discovery_dataset": "2019-12-06 to 2023-01-01 (In-Sample)",
+    "validation_dataset": "2023-01-06 to 2025-09-26 (OOS Validation)",
+    "replication_dataset": "2025-10-03 to 2026-07-03 (Frozen Blind Test)",
+    "git_commit": "live-exposure-audit-v1",
+    "threats_to_validity": "Weekly rebalancing assumes block execution at Friday market open.",
+    "known_limitations": "Does not model intraday order execution algorithms."
+  }
+]

@@ -10,8 +10,11 @@ def _clip(value: float, low: float, high: float) -> float:
     return float(np.clip(value, low, high))
 
 
-def _softmax(logits: np.ndarray) -> np.ndarray:
-    logits = np.asarray(logits, dtype=float)
+REGIME_TEMPERATURE = 1.0
+
+
+def _softmax(logits: np.ndarray, temperature: float = 1.0) -> np.ndarray:
+    logits = np.asarray(logits, dtype=float) / temperature
     logits = logits - np.nanmax(logits)
     exp = np.exp(logits)
     denom = exp.sum()
@@ -74,7 +77,8 @@ def infer_regime_probabilities(
         +0.20 * features.suppression_score
     )
 
-    probs = _softmax(np.array([bull_logit, chop_logit, bear_logit], dtype=float))
+    temperature = REGIME_TEMPERATURE
+    probs = _softmax(np.array([bull_logit, chop_logit, bear_logit], dtype=float), temperature)
     bull, chop, bear = map(float, probs)
 
     ordered = sorted([bull, chop, bear], reverse=True)
